@@ -1,0 +1,101 @@
+# Roadmap
+
+Oopsling turns a crash in a .NET app into a GitHub issue the user files themselves, and sends nothing on its own. This file tracks the decisions already made, what gets built in what order, and what is out of scope.
+
+## Architecture characteristics
+
+What the design protects, in order:
+
+1. **Privacy.** Nothing leaves the PC unless the user reads it and presses Submit on GitHub. A report holds nothing the user wouldn't post in public, because a GitHub issue is public.
+2. **Works while dying.** The handler runs in a process that is already broken, so it writes one file and does nothing else: it never throws, never waits on a lock, and never shows UI or calls the host's services. Showing and filing happen at the next launch.
+3. **Free until a crash.** NativeAOT and trim safe, with no reflection. At startup Oopsling hooks one handler and checks one folder. It needs nothing beyond the .NET base library, and Avalonia for the window.
+
+Given up for them: the diagnostics other crash reporters collect (minidumps, logs, breadcrumbs, the environment), a "send now?" dialog at the moment of the crash, and line numbers in NativeAOT stacks. Readable reports come fourth: a report must name the method that threw, NativeAOT or not.
+
+## Decisions (2026-10-25)
+
+- **Name: Oopsling,** a little one who says "oops" and owns it. Free and open source (Apache-2.0, like Staypaw and Sweepling), in the public repo `hazeliscoding/oopsling`, published to nuget.org. On 2026-10-24 the name had no GitHub repos, no NuGet package, no web hits and no DNS for `oopsling.com`, `oopsling.app` or `oopsling.dev`. Trademarks aren't checked. It gives up Ouchling, the runner-up.
+- **Two packages.** `Oopsling` holds the catching, the report, the masking and the issue link, with no UI, so any .NET app can use it. `Oopsling.Avalonia` adds the window that shows the last crash. The core never references Avalonia. Every app the owner ships is Avalonia. On 2026-10-25 no package was found that keeps a report local, masks it and hands it to GitHub: MaksIT.Core.UI shows a local crash window for Avalonia with Copy, as one of its makers' shared windows, and Avalonia apps such as PixiEditor and UVtools each build their own issue link. This gives up installing a single package.
+- **Windows, macOS and Linux, on `net10.0`.** The core needs nothing OS-specific: home-folder masking, the OS description and opening the browser work on all three, and Prompuff ships on macOS and Linux. CI tests on all three. .NET 10 only, since .NET 8 and 9 both reach end of support on 2026-11-10, and Avalonia 12, like the owner's apps. This gives up Windows-only extras in the core, such as reading the Event Log; one would need its own package.
+- **Unhandled managed exceptions only.** Oopsling hooks `AppDomain.CurrentDomain.UnhandledException`. Avalonia rethrows a UI-thread exception out of `Main`, so that one hook should see it too. M1 checks this, and `Oopsling.Avalonia` adds a dispatcher hook if it doesn't. Oopsling records the crash and lets the app die: it never marks an exception handled, because a broken app kept running can damage the user's data. Unobserved task exceptions aren't crashes and are left out. This gives up stack overflows, `Environment.FailFast` and native crashes, which end the process before any handler runs.
+- **Masked exception messages go in the report.** A message is often the most useful line ("Could not find file …"), and the user sees the whole report twice before anything is public: in the window, and in GitHub's form, where they can still edit it. Home folders, the user name and token-like strings are masked. The user name is matched on its own, not only inside the home folder's path, because Sweepling's masking missed it in Claude Code's `C--Users-<name>-…` paths. This gives up a guarantee that nothing personal ever slips through; the user's review is the safety net.
+- **What a report holds:** for the exception and each inner one, its type, masked message and stack; then the app's version, the OS description, the .NET version, the process architecture, and whether the app is NativeAOT. Nothing else: no environment variables, command lines, logs, machine name or screenshots. A new field needs a dated decision here.
+- **A report is a Markdown file: the issue body as it will be filed.** One file per crash in a `crashes` folder under `Environment.SpecialFolder.LocalApplicationData`/`<app>`, which puts Staypaw's beside its focus log, and the newest 10 are kept. What the user reads is what reaches GitHub, and the dying process writes one format. Masks are worked out at start, so at crash time Oopsling only replaces strings and writes the file. This gives up a machine-readable report.
+- **Shown once, at the next launch.** The Avalonia window opens when there's a report it hasn't shown. Report on GitHub opens the filled-in issue, Copy puts the report on the clipboard, and Dismiss closes the window. It follows the host's theme. This gives up a prompt at the moment of the crash.
+- **The issue link** is the repo's `issues/new` page with `title` and `body` filled in, opened through the OS shell, so the user's own browser and GitHub sign-in do the rest and Oopsling sends nothing. Only `title` and `body`: GitHub's docs say a parameter the user has no permission for, such as `labels`, turns the page into a 404, and someone filing a crash usually can't label. When a report doesn't fit in a URL, the link carries the top of the stack and asks the user to paste the rest, which the window has put on the clipboard. No limit is documented: GitHub answers 414 past one it doesn't state, and the 2083 characters often quoted for `ShellExecute` come from WinINET and an old blog post. M2 measures the real limits. This gives up users without a GitHub account, who can still Copy the report.
+- **First host: Staypaw.** It's shipped (1.1.1), so a report from a stranger is the real proof, and its `GuardrailTests` already fail if its code references a networking assembly. A sample app in this repo, with a Crash button, drives the tests and the README demo. This gives up Sweepling, Shybun and Tattlebun until after the first release.
+- **Releases** go to nuget.org through trusted publishing from a protected `release` environment, so no API key is stored. A `v*` tag publishes both packages at the same version.
+
+## M0: Placeholder
+
+- [ ] .NET 10 solution with central package versions: `Oopsling`, `Oopsling.Avalonia`, the tests, and a sample Avalonia 12 app with a Crash button that does nothing yet.
+- [ ] Both packages are `IsAotCompatible`, trim and AOT warnings are errors, and the sample publishes with NativeAOT.
+- [ ] CI on Windows, macOS and Linux: build, test, pack, and the sample's NativeAOT publish.
+- [ ] Secret scanning: the gitleaks release binary, checked against its published checksum, run with `--log-opts="--full-history HEAD"`.
+- [ ] A test that fails when either package references a networking assembly, with a positive control.
+- [ ] A test that fails when the core references Avalonia, with a positive control.
+
+**Done when:** CI passes on all three OSes, a throwaway pull request with a fake token fails the gitleaks check, and each guard test fails when the code it protects is changed to break it.
+
+## M1: Write the report
+
+- [ ] One call at the top of the host's `Main` hooks the handler and works out the report folder and the masks. Settle the public API's names here.
+- [ ] The report: every field in the decision above, masked, as Markdown.
+- [ ] Masking: the home folder, the user name in any form (with `-`, `/` or `\` around it), and token-like strings. Tests build token-shaped values at run time.
+- [ ] Keep the newest 10 reports.
+- [ ] Check that a UI-thread exception in Avalonia reaches the handler. If it doesn't, add the dispatcher hook to `Oopsling.Avalonia`.
+- [ ] The handler never throws. A full disk, a folder it can't write to, or an exception whose `ToString` throws still leaves the original crash to end the app as it would have.
+
+**Done when:** the sample's JIT and NativeAOT builds, made to crash on the UI thread and on a background thread, each leave a report that names the method that threw, and a test with a made-up user name and home folder finds no trace of either in the report.
+
+## M2: Show and file
+
+- [ ] The core's next-launch API: the newest report not yet shown, its issue title and its issue link.
+- [ ] Measure the URL limits of GitHub's new-issue page, `ShellExecute`, `xdg-open` and `open`, and record them here.
+- [ ] Long reports: the link carries the top of the stack and asks the user to paste the rest from the clipboard.
+- [ ] The Avalonia window: the report, Report on GitHub, Copy and Dismiss, in the host's theme, shown once per report.
+
+**Done when:** on Windows, the sample's next launch after a crash shows the report once, and Report on GitHub opens a filled-in new-issue page for a scratch repo in the default browser, with nothing filed. The link tests pass on all three OSes, including a report too long for a URL.
+
+## M3: Preview and Staypaw
+
+- [ ] A release workflow: a `v*` tag packs both packages and publishes them to nuget.org through trusted publishing.
+- [ ] `0.1.0-preview.1` on nuget.org.
+- [ ] Staypaw takes `Oopsling.Avalonia` from nuget.org, with its `GuardrailTests` still passing.
+
+**Done when:** a Staypaw build made to crash shows Oopsling's window at its next launch and opens a filled-in issue page for Staypaw's repo, and Staypaw's CI is green.
+
+## M4: 1.0
+
+- [ ] README: install, a demo GIF from the sample, and the comparison with alternatives checked again.
+- [ ] `CONTRIBUTING.md` and `SECURITY.md`.
+- [ ] The OSS launch gates:
+  - [ ] the core journey works end to end: crash, next launch, report, filled-in issue;
+  - [ ] a fresh install from nuget.org works in a new Avalonia app on each OS, following the README;
+  - [ ] the README quick start is accurate;
+  - [ ] CI is green and there are no known critical bugs;
+  - [ ] error messages are understandable;
+  - [ ] the issue tracker is ready for reports.
+
+**Done when:** every gate above is ticked, and a Staypaw release with Oopsling in it has shipped.
+
+## How we'll know it works
+
+A dogfooding log in `docs/dogfooding.md`, kept from M3 on: crashes reported through Oopsling, and any report that held something it shouldn't have. That last count must stay zero. After 1.0, public signals: NuGet downloads, issues, pull requests, and other apps using it.
+
+## Later
+
+- Line numbers in NativeAOT stacks, for example from a map shipped beside the app, if reports without them prove hard to act on.
+- A Windows package that reads the Event Log at the next launch, for crashes that leave no managed exception.
+- An unclean-exit marker ("closed unexpectedly last time"), if it can tell a crash from being ended in Task Manager or a forced reboot.
+- WPF and WinForms windows.
+- Sweepling, Shybun and Tattlebun as hosts.
+- The window's text in other languages.
+
+## Not planned
+
+- Sending anything: no network code, no server, no email, no "send automatically" option.
+- Minidumps, logs, breadcrumbs, screenshots or environment variables in a report.
+- Catching stack overflows, `Environment.FailFast` or native crashes inside the process.
+- Unobserved task exceptions.
+- Marking a crash handled to keep the app running.
