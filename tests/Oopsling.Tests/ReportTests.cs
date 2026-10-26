@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace Oopsling.Tests;
@@ -11,6 +12,22 @@ public class ReportTests
     [Fact]
     public void The_first_line_is_the_issue_title() =>
         Assert.Equal("Sample 1.2.3 crashed: InvalidOperationException", Format(Thrown(new InvalidOperationException("boom"))).Split('\n')[0]);
+
+    // Avalonia calls Click handlers through reflection, so a UI-thread crash arrives wrapped.
+    [Fact]
+    public void The_title_names_the_exception_inside_a_TargetInvocationException() =>
+        Assert.Equal(
+            "Sample 1.2.3 crashed: InvalidOperationException",
+            Format(new TargetInvocationException(new InvalidOperationException("boom"))).Split('\n')[0]);
+
+    // Oopsling builds the details itself, and a commit hash in the version would look like a key to the mask.
+    [Fact]
+    public void Leaves_the_details_as_given()
+    {
+        const string details = "- App: Sample 1.2.3+0123456789abcdef0123456789abcdef01234567";
+
+        Assert.Contains(details, Report.Format(new InvalidOperationException("boom"), "Sample 1.2.3", details, Mask));
+    }
 
     [Fact]
     public void Names_the_method_that_threw() => Assert.Contains(nameof(ThrowFromHere), Format(Thrown(new InvalidOperationException("boom"))));
