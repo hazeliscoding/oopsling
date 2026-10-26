@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <IsPackable>false</IsPackable>
+    <!-- Published with NativeAOT, like Oopsling's hosts, so a package that breaks under it fails here first. -->
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
+    <!-- Report each trim warning where it comes from instead of one per assembly. -->
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Oopsling.Avalonia\Oopsling.Avalonia.csproj" />
+  </ItemGroup>
+
+</Project>

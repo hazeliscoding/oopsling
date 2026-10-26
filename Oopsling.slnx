@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Oopsling/Oopsling.csproj" />
+    <Project Path="src/Oopsling.Avalonia/Oopsling.Avalonia.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/Oopsling.Sample/Oopsling.Sample.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Oopsling.Tests/Oopsling.Tests.csproj" />
+  </Folder>
+</Solution>

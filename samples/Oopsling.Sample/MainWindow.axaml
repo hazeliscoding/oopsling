@@ -1,0 +1,11 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Oopsling.Sample.MainWindow"
+        Title="Oopsling Sample"
+        Width="400" Height="200"
+        WindowStartupLocation="CenterScreen">
+  <StackPanel Margin="24" Spacing="16" VerticalAlignment="Center">
+    <TextBlock TextWrapping="Wrap">Crash will end this app with an unhandled exception, so Oopsling can report it at the next launch. It does nothing yet.</TextBlock>
+    <Button Content="Crash" HorizontalAlignment="Left" />
+  </StackPanel>
+</Window>

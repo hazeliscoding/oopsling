@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Crash reports for .NET apps that send nothing. After a crash, the user sees what happened and files it as a GitHub issue from their own browser.</Description>
+    <!-- Hosts publish with NativeAOT: trim and AOT analyzers run here, and their warnings are errors. -->
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+
+</Project>

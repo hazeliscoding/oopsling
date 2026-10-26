@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>The Avalonia window for Oopsling: shows the last crash report, and opens it as a filled-in GitHub issue in the user's browser.</Description>
+    <!-- Hosts publish with NativeAOT: trim and AOT analyzers run here, and their warnings are errors. -->
+    <IsAotCompatible>true</IsAotCompatible>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Oopsling\Oopsling.csproj" />
+  </ItemGroup>
+
+</Project>

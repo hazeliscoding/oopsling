@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Oopsling.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Oopsling\Oopsling.csproj" />
+    <ProjectReference Include="..\..\src\Oopsling.Avalonia\Oopsling.Avalonia.csproj" />
+    <!-- The guard tests' positive control: the sample is an Avalonia app. -->
+    <ProjectReference Include="..\..\samples\Oopsling.Sample\Oopsling.Sample.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>
