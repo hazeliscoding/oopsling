@@ -29,14 +29,22 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 
 ## M0: Placeholder
 
-- [ ] .NET 10 solution with central package versions: `Oopsling`, `Oopsling.Avalonia`, the tests, and a sample Avalonia 12 app with a Crash button that does nothing yet.
-- [ ] Both packages are `IsAotCompatible`, trim and AOT warnings are errors, and the sample publishes with NativeAOT.
-- [ ] CI on Windows, macOS and Linux: build, test, pack, and the sample's NativeAOT publish.
-- [ ] Secret scanning: the gitleaks release binary, checked against its published checksum, run with `--log-opts="--full-history HEAD"`.
-- [ ] A test that fails when either package references a networking assembly, with a positive control.
-- [ ] A test that fails when the core references Avalonia, with a positive control.
+- [x] .NET 10 solution with central package versions: `Oopsling`, `Oopsling.Avalonia`, the tests, and a sample Avalonia 12 app with a Crash button that does nothing yet.
+- [x] Both packages are `IsAotCompatible`, trim and AOT warnings are errors, and the sample publishes with NativeAOT.
+- [x] CI on Windows, macOS and Linux: build, test, pack, and the sample's NativeAOT publish.
+- [x] Secret scanning: the gitleaks release binary, checked against its published checksum, run with `--log-opts="--full-history HEAD"`.
+- [x] A test that fails when either package references a networking assembly, with a positive control.
+- [x] A test that fails when the core references Avalonia, with a positive control.
 
 **Done when:** CI passes on all three OSes, a throwaway pull request with a fake token fails the gitleaks check, and each guard test fails when the code it protects is changed to break it.
+
+**Done on 2026-10-25:**
+
+- CI passed on `main` on Windows, Linux and macOS, with the pack and the sample's NativeAOT publish on each: [run 40251443175](https://github.com/hazeliscoding/oopsling/actions/runs/40251443175).
+- Throwaway pull request #1 planted a random fake GitHub token. Its secrets job failed on the history scan while the builds passed: [run 40251563026](https://github.com/hazeliscoding/oopsling/actions/runs/40251563026). It was closed without merging.
+- Each guard test failed when the code it protects was broken, and no other test did. A core class creating an `HttpClient` failed `Neither_package_references_a_networking_assembly`, and so did the same class in `Oopsling.Avalonia`. Adding Avalonia to the core and using `Avalonia.Point` failed `The_core_does_not_reference_Avalonia`.
+- Trim and AOT warnings fail the build: a `Type.GetType(string)` call in the core stopped it with `error IL2057`.
+- The sample's NativeAOT build on Windows is a 16.5 MB exe. It started, showed its window, and closed with exit code 0.
 
 ## M1: Write the report
 

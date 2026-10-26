@@ -51,7 +51,7 @@ There are two packages. `Oopsling` has no UI and works in any .NET app. `Oopslin
 
 ## Status
 
-**Planning.** Nothing is built or published yet. [ROADMAP.md](ROADMAP.md) has the decisions and milestones, and M0 is next. [Staypaw](https://github.com/hazeliscoding/staypaw) will be the first app to use it.
+**Early development.** The scaffold, CI on Windows, macOS and Linux, and the guard tests are in, but nothing catches a crash yet and nothing is published. [ROADMAP.md](ROADMAP.md) has the decisions and milestones, and M1 is next. [Staypaw](https://github.com/hazeliscoding/staypaw) will be the first app to use it.
 
 ## Alternatives
 
