@@ -20,10 +20,13 @@ jobs:
         include:
           - os: windows-latest
             rid: win-x64
+            exe: .exe
           - os: ubuntu-latest
             rid: linux-x64
+            exe: ""
           - os: macos-latest
             rid: osx-arm64
+            exe: ""
     runs-on: ${{ matrix.os }}
     env:
       DOTNET_NOLOGO: true
@@ -55,6 +58,14 @@ jobs:
       # Trim and AOT warnings are errors, so a package that breaks a NativeAOT host fails here.
       - name: Publish the sample (NativeAOT)
         run: dotnet publish samples/Oopsling.Sample --configuration Release --runtime ${{ matrix.rid }} --output artifacts/publish
+
+      # M1's done line: both builds, crashed on the UI thread and on a background thread, leave a report.
+      - name: Crash the sample and check its reports
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          scripts/crash-check.sh "samples/Oopsling.Sample/bin/Release/net10.0/Oopsling.Sample${{ matrix.exe }}" no
+          scripts/crash-check.sh "artifacts/publish/Oopsling.Sample${{ matrix.exe }}" yes
 
   secrets:
     runs-on: ubuntu-latest
