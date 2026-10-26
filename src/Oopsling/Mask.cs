@@ -40,8 +40,10 @@ internal sealed partial class Mask(string home, string user, string machine = ""
         $"(?:(?<![A-Za-z0-9])|(?<=%[0-9A-Fa-f]{{2}})){Regex.Escape(name)}(?![A-Za-z0-9])",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
-    // The user and password in https://user:password@host, up to the authority's last @, since a password can hold one.
-    [GeneratedRegex(@"(?<=://)[^\s/?#]*@", RegexOptions.CultureInvariant)]
+    // The user and password in https://user:password@host. A password can hold @, ?, # or / unescaped, so this runs to
+    // the last @ before a space. It also masks the host of a URL with an @ further on, like an npm scope: too much
+    // rather than too little.
+    [GeneratedRegex(@"(?<=://)\S*@", RegexOptions.CultureInvariant)]
     private static partial Regex UrlCredentials();
 
     // The value after a name like token=, api_key= or password:. Unlike Sweepling's CommandLineMask, a space alone

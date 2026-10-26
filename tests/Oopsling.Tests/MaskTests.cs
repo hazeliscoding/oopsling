@@ -33,6 +33,8 @@ public class MaskTests
     [Theory]
     [InlineData("Could not reach https://deploy:hunter2@example.com/feed", "Could not reach https://<token>@example.com/feed")]
     [InlineData("Could not reach https://deploy:p@ss@example.com/feed", "Could not reach https://<token>@example.com/feed")]
+    [InlineData("Could not reach https://deploy:p?s#s@example.com/feed", "Could not reach https://<token>@example.com/feed")]
+    [InlineData("Could not reach https://deploy:p/ss@example.com/feed", "Could not reach https://<token>@example.com/feed")]
     public void Masks_credentials_in_a_URL(string text, string expected) => Assert.Equal(expected, Windows.Apply(text));
 
     // Parameter names like these fill .NET stack traces.
