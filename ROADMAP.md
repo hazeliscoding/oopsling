@@ -22,7 +22,7 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 - **What a report holds:** for the exception and each inner one, its type, masked message and stack; then the app's version, the OS description, the .NET version, the process architecture, and whether the app is NativeAOT. Nothing else: no environment variables, command lines, logs, machine name or screenshots. A new field needs a dated decision here.
 - **A report is a Markdown file: the issue body as it will be filed.** One file per crash in a `crashes` folder under `Environment.SpecialFolder.LocalApplicationData`/`<app>`, which puts Staypaw's beside its focus log, and the newest 10 are kept. What the user reads is what reaches GitHub, and the dying process writes one format. Masks are worked out at start, so at crash time Oopsling only replaces strings and writes the file. This gives up a machine-readable report. *Refined in M1: the file's first line is the issue's title. See "Decisions in M1".*
 - **Shown once, at the next launch.** The Avalonia window opens when there's a report it hasn't shown. Report on GitHub opens the filled-in issue, Copy puts the report on the clipboard, and Dismiss closes the window. It follows the host's theme. This gives up a prompt at the moment of the crash.
-- **The issue link** is the repo's `issues/new` page with `title` and `body` filled in, opened through the OS shell, so the user's own browser and GitHub sign-in do the rest and Oopsling sends nothing. Only `title` and `body`: GitHub's docs say a parameter the user has no permission for, such as `labels`, turns the page into a 404, and someone filing a crash usually can't label. When a report doesn't fit in a URL, the link carries the top of the stack and asks the user to paste the rest, which the window has put on the clipboard. No limit is documented: GitHub answers 414 past one it doesn't state, and the 2083 characters often quoted for `ShellExecute` come from WinINET and an old blog post. M2 measures the real limits. This gives up users without a GitHub account, who can still Copy the report.
+- **The issue link** is the repo's `issues/new` page with `title` and `body` filled in, opened through the OS shell, so the user's own browser and GitHub sign-in do the rest and Oopsling sends nothing. Only `title` and `body`: GitHub's docs say a parameter the user has no permission for, such as `labels`, turns the page into a 404, and someone filing a crash usually can't label. When a report doesn't fit in a URL, the link carries the top of the stack and asks the user to paste the rest, which the window has put on the clipboard. No limit is documented: GitHub answers 414 past one it doesn't state, and the 2083 characters often quoted for `ShellExecute` come from WinINET and an old blog post. M2 measures the real limits. This gives up users without a GitHub account, who can still Copy the report. *Settled in M2: links stop at 6,000 characters, and a longer report asks the user to paste the whole report over the top of it. See "Decisions in M2".*
 - **First host: Staypaw.** It's shipped (1.1.1), so a report from a stranger is the real proof, and its `GuardrailTests` already fail if its code references a networking assembly. A sample app in this repo, with a Crash button, drives the tests and the README demo. This gives up Sweepling, Shybun and Tattlebun until after the first release.
 - **Brand: option 1, "Bandage",** a round coral critter with a crossed bandage on its head and a sheepish smile, picked from four takes on the claude.ai design canvas "Oopsling logo". It says "oops" and owns it without explanation, and the bandage cross still reads at 16 px. The wordmark is outlined Fredoka SemiBold, like Staypaw's and Sweepling's. Assets are in `docs/brand/`. This gives up Note, which held up a report card, Wobble and Peek.
 - **Releases** go to nuget.org through trusted publishing from a protected `release` environment, so no API key is stored. A `v*` tag publishes both packages at the same version.
@@ -38,6 +38,22 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 - **The NativeAOT line asks whether anything was JIT-compiled.** `RuntimeFeature.IsDynamicCodeSupported` is off in the JIT build of any `PublishAot` project, so the sample's JIT build reported "NativeAOT: yes".
 - **NativeAOT stacks are readable enough:** each frame keeps its method name, with an offset in place of a line number, as in `MainWindow.Crash(Object, RoutedEventArgs) + 0x2b`. Frames without metadata show as `Oopsling.Sample!<BaseAddress>+0x7d40ed`. Line numbers stay under Later.
 - **The sample takes `--crash ui` or `--crash background`,** which presses that Crash button once the window is up, so `scripts/crash-check.sh` can run M1's done line on every OS in CI. Linux runs it on a virtual display through `xvfb-run`.
+
+## Decisions in M2 (2026-10-26)
+
+- **The URL limits, measured.** GitHub sets the limit on every OS:
+  - **GitHub, signed in:** an 8,000-character link opened the new-issue page with the title and body filled in. From 8,210 characters GitHub answers 414, a request target of 8,192.
+  - **GitHub, signed out:** GitHub first redirects to sign in. Links up to 6,366 characters always got the redirect. From about 6,600 some got a 500 instead, and from 6,900 all did. Percent-escapes made no difference.
+  - **`ShellExecute`,** through `Process.Start` on Windows 11: 32,000 characters reached a URL protocol handler intact, and 32,767 failed, the command line's limit. The often-quoted 2,083 doesn't apply.
+  - **`xdg-open`** 1.2.1 on Ubuntu, in CI: 131,000 characters arrived intact, and 131,072 failed, Linux's limit for one argument.
+  - **`open`** on macOS, in CI: a 65,000-character `http://127.0.0.1` link reached a local listener through Safari intact, the most that listener accepts. `open` took a 262,144-character argument and failed at 1,048,576, macOS's limit for a command's arguments.
+- **Links stop at 6,000 characters,** so a signed-out user's redirect to sign in still works, with a margin for GitHub's own headers. This gives up about 2,200 characters of report for users who are signed in. The sample's UI-thread crash, with Avalonia's frames, is 3.7 KB and fits.
+- **A report too long for a link keeps the top of the stack and the details, and the clipboard gets the whole report.** A note at the top of the issue asks the user to select everything and paste over it. Pasting only the rest, as first planned, needs the cursor at the right spot and splits the code fence between two pieces. A user who doesn't paste still files a useful issue: the frames nearest the throw, the details, and a note that the stack was cut. This gives up a link that fills in the whole report.
+- **The core's API:** `CrashReports.TakeUnshown()` returns the newest report not yet shown as a `CrashReport`, with its title, its text, its issue link, whether it fits in the link, and `OpenIssue()`, and marks it shown. A `shown` file in the crashes folder remembers the newest name shown, so an older report is never shown: the newer crash already told the user. `OpenIssue()` uses `Process.Start` with the shell, the path measured above.
+- **The window:** `CrashReportWindow.ShowUnshown(mainWindow)` reads the report only once the main window is open, so it costs the launch nothing. The window opens over the main window without blocking it. This gives up showing a crash before the main window exists.
+- **Copy copies the whole report, title line first,** and so does Report on GitHub for a long report. The pasted issue then repeats its title in the first line. This gives up a body without the title line, for one text the user can also paste anywhere else.
+- **The sample takes `--repo owner/name` as its first arguments,** so checks open the link for the private scratch repo `hazeliscoding/oopsling-scratch`, never for Oopsling's own issues.
+- **The window's tests render it with `Avalonia.Headless`,** a test-only package, so they run on every OS in CI.
 
 ## M0: Placeholder
 
@@ -78,12 +94,20 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 
 ## M2: Show and file
 
-- [ ] The core's next-launch API: the newest report not yet shown, its issue title and its issue link.
-- [ ] Measure the URL limits of GitHub's new-issue page, `ShellExecute`, `xdg-open` and `open`, and record them here.
-- [ ] Long reports: the link carries the top of the stack and asks the user to paste the rest from the clipboard.
-- [ ] The Avalonia window: the report, Report on GitHub, Copy and Dismiss, in the host's theme, shown once per report.
+- [x] The core's next-launch API: the newest report not yet shown, its issue title and its issue link.
+- [x] Measure the URL limits of GitHub's new-issue page, `ShellExecute`, `xdg-open` and `open`, and record them here.
+- [x] Long reports: the link carries the top of the stack and asks the user to paste the rest from the clipboard. *Refined: the user pastes the whole report over the top of it. See "Decisions in M2".*
+- [x] The Avalonia window: the report, Report on GitHub, Copy and Dismiss, in the host's theme, shown once per report.
 
 **Done when:** on Windows, the sample's next launch after a crash shows the report once, and Report on GitHub opens a filled-in new-issue page for a scratch repo in the default browser, with nothing filed. The link tests pass on all three OSes, including a report too long for a URL.
+
+**Done on 2026-10-26:**
+
+- On Windows 11, the sample crashed on the UI thread, and at its next launch the window showed the report. Report on GitHub opened the new-issue page of `hazeliscoding/oopsling-scratch` in the default browser, Brave, with the title and the report filled in. Nothing was filed. The launch after that showed no window. The NativeAOT build showed the window too, and its exe grew from 16.5 MB to 18.6 MB.
+- The link tests, including a 400-frame report cut to fit, and the headless window tests passed on Windows, Linux and macOS: [run 40370147390](https://github.com/hazeliscoding/oopsling/actions/runs/40370147390).
+- Each window test failed when the code it covers was broken. Copying only the title failed `Copy_puts_the_whole_report_on_the_clipboard`, and showing the long-report note for a short report failed `Says_when_the_report_is_too_long_for_a_link`. The first version of the Copy test passed anyway: its async lambda went to a `Dispatch` overload that never awaits it, so its assertions never ran.
+- The limits above came from `curl` against GitHub, a throwaway URL scheme on Windows, and a throwaway branch's workflow on Linux and macOS: [run 40356713787](https://github.com/hazeliscoding/oopsling/actions/runs/40356713787) for `xdg-open`, [run 40372160706](https://github.com/hazeliscoding/oopsling/actions/runs/40372160706) for `open`. The branch was deleted afterwards.
+- Not checked: a signed-out user signing in and landing back on the filled-in page, a repo with issue templates, and the window outside headless tests on macOS and Linux.
 
 ## M3: Preview and Staypaw
 
