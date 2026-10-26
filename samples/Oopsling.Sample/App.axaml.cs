@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Oopsling.Avalonia;
 
 namespace Oopsling.Sample;
 
@@ -14,6 +15,7 @@ public partial class App : Application
         {
             var window = new MainWindow();
             desktop.MainWindow = window;
+            CrashReportWindow.ShowUnshown(window);
             if (desktop.Args is ["--crash", var thread])
             {
                 window.PressOnceOpened(backgroundThread: thread == "background");
