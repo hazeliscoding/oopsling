@@ -17,6 +17,9 @@ public class CrashReportsTests
         Assert.Throws<ArgumentException>(() => CrashReports.Start("Sample/../elsewhere", "hazeliscoding/staypaw"));
 
     [Fact]
+    public void TakeUnshown_wants_Start_first() => Assert.Throws<InvalidOperationException>(CrashReports.TakeUnshown);
+
+    [Fact]
     public void Details_name_the_app_runtime_and_architecture()
     {
         var details = CrashReports.Details("Sample", "1.2.3+abc");
