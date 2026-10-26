@@ -51,7 +51,7 @@ There are two packages. `Oopsling` has no UI and works in any .NET app. `Oopslin
 
 ## Status
 
-**Early development.** The scaffold, CI on Windows, macOS and Linux, and the guard tests are in, but nothing catches a crash yet and nothing is published. [ROADMAP.md](ROADMAP.md) has the decisions and milestones, and M1 is next. [Staypaw](https://github.com/hazeliscoding/staypaw) will be the first app to use it.
+**Early development.** `CrashReports.Start` writes a masked report when an unhandled exception ends the app, on Windows, macOS and Linux, NativeAOT or not. Nothing shows the report or files it yet, and nothing is published. [ROADMAP.md](ROADMAP.md) has the decisions and milestones, and M2 is next. [Staypaw](https://github.com/hazeliscoding/staypaw) will be the first app to use it.
 
 ## Alternatives
 
