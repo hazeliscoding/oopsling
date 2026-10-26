@@ -1,4 +1,9 @@
-# Oopsling
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/lockup-dark.svg">
+    <img alt="Oopsling" src="docs/brand/lockup.svg" height="48">
+  </picture>
+</h1>
 
 **Oopsling turns a crash in your .NET app into a GitHub issue the user files themselves, and sends nothing on its own.**
 
