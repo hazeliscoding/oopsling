@@ -15,24 +15,30 @@ If your app promises no telemetry, you can't tell when it crashes on someone els
 
 **After.** At the next launch, the app says it closed because of an error and shows exactly what it would report. One button opens a filled-in GitHub issue in the user's own browser. They read it, edit it if they like, and press Submit, or don't.
 
-A made-up report, in the shape M1 will settle:
+A made-up report, as Oopsling writes it. The first line becomes the issue's title:
 
-```text
+````markdown
 Oopsling Sample 0.1.0 crashed: FileNotFoundException
 
+```text
 System.IO.FileNotFoundException: Could not find file '<home>/.config/oopsling-sample/settings.json'.
-   at Oopsling.Sample.Settings.Load()
-   at Oopsling.Sample.App.OnFrameworkInitializationCompleted()
-
-Oopsling Sample 0.1.0 · Ubuntu 24.04.3 LTS · .NET 10.0.0 · X64 · NativeAOT
+   at Oopsling.Sample.Settings.Load() + 0x8c
+   at Oopsling.Sample.App.OnFrameworkInitializationCompleted() + 0x2b
 ```
+
+- App: Oopsling Sample 0.1.0+4f2c1ab
+- OS: Ubuntu 24.04.3 LTS
+- Runtime: .NET 10.0.0
+- Architecture: X64
+- NativeAOT: yes
+````
 
 ## What it does
 
 - When an unhandled exception ends your app, Oopsling writes one report to a file on the user's PC: the exception and its stack, your app's version, and the OS, .NET version and architecture. Nothing else.
 - Before it writes, it masks the home folder, the user name wherever it appears, and anything that looks like a token.
 - At the next launch, a small Avalonia window shows the report, with Report on GitHub, Copy and Dismiss.
-- Report on GitHub opens your repo's new-issue page with the title and report filled in. When a report is too long for a link, the rest goes to the clipboard.
+- Report on GitHub opens your repo's new-issue page with the title and report filled in. When a report is too long for a link, the link carries the top of the stack, and the whole report goes on the clipboard to paste in.
 - It works on Windows, macOS and Linux, with NativeAOT, and costs one handler and one folder check at startup.
 
 **The promise:** Oopsling never sends anything. A report leaves the PC only when the user reads it in their own browser and presses Submit.
@@ -51,7 +57,7 @@ There are two packages. `Oopsling` has no UI and works in any .NET app. `Oopslin
 
 ## Status
 
-**Early development.** `CrashReports.Start` writes a masked report when an unhandled exception ends the app, on Windows, macOS and Linux, NativeAOT or not. Nothing shows the report or files it yet, and nothing is published. [ROADMAP.md](ROADMAP.md) has the decisions and milestones, and M2 is next. [Staypaw](https://github.com/hazeliscoding/staypaw) will be the first app to use it.
+**Early development.** `CrashReports.Start` writes a masked report when an unhandled exception ends the app, on Windows, macOS and Linux, NativeAOT or not. At the next launch, `CrashReportWindow.ShowUnshown` shows it once, and Report on GitHub opens it as a filled-in issue in the user's browser. Nothing is published to NuGet yet. [ROADMAP.md](ROADMAP.md) has the decisions and milestones, and M3 is next. [Staypaw](https://github.com/hazeliscoding/staypaw) will be the first app to use it.
 
 ## Alternatives
 
