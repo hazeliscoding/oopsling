@@ -14,6 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Renders the window without a display, so its tests run on every OS in CI. -->
+    <PackageReference Include="Avalonia.Headless" />
     <PackageReference Include="xunit.v3" />
   </ItemGroup>
 
