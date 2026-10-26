@@ -54,7 +54,7 @@ One meaning per term. Code, docs, UI copy and agents use these words and no syno
 - **No AI attribution** in commits or PRs: no `Co-Authored-By` trailers, no "Generated with" lines, no session links.
 - **Tests first for masking and the report.** Both are pure functions of their inputs, so tests give them made-up home folders, user names and exceptions.
 - **Checks:** automate acceptance checks instead of handing manual steps to the owner. A check that tests for an absence needs a positive control: prove a CI guardrail with a throwaway pull request that must fail, and a guard test by changing the code it protects so the test fails.
-- **Never file a real issue to test the link.** Open the filled-in page for a scratch repo and stop before Submit. A filed test issue lands in someone's tracker.
+- **Never file a real issue to test the link.** Open the filled-in page for the private scratch repo, by starting the sample with `--repo hazeliscoding/oopsling-scratch`, and stop before Submit. A filed test issue lands in someone's tracker. Leave the tabs it opens for the owner to close: the browser is theirs, with their own tabs in it.
 - **Validation:** evidence comes from the dogfooding log and public signals (downloads, issues, PRs). Don't plan interviews or outreach.
 - **Docs:** short. Prefer editing `ROADMAP.md` over new planning documents.
 - **Code comments:** explain why, not what. No boilerplate XML docs, no commented-out code.
