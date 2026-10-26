@@ -1,5 +1,5 @@
 using System.Reflection;
-using System.Runtime.CompilerServices;
+using System.Runtime;
 using System.Runtime.InteropServices;
 
 namespace Oopsling;
@@ -32,7 +32,11 @@ public static class CrashReports
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), appName, "crashes"),
             $"{appName} {version.Split('+')[0]}",
             Details(appName, version),
-            new Mask(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), Environment.UserName));
+            new Mask(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                Environment.UserName,
+                Environment.MachineName,
+                Environment.UserDomainName));
 
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
@@ -43,12 +47,14 @@ public static class CrashReports
         };
     }
 
+    // A NativeAOT build has no JIT. RuntimeFeature.IsDynamicCodeSupported can't tell: PublishAot turns it off in JIT
+    // builds too, so they behave alike before publishing.
     internal static string Details(string appName, string version) => $"""
         - App: {appName} {version}
         - OS: {RuntimeInformation.OSDescription}
         - Runtime: {RuntimeInformation.FrameworkDescription}
         - Architecture: {RuntimeInformation.ProcessArchitecture}
-        - NativeAOT: {(RuntimeFeature.IsDynamicCodeSupported ? "no" : "yes")}
+        - NativeAOT: {(JitInfo.GetCompiledMethodCount() == 0 ? "yes" : "no")}
         """;
 
     // The informational version carries the commit after a +, which helps match a NativeAOT stack to its build.
