@@ -30,9 +30,10 @@ public class MaskTests
     [InlineData(@"Could not sign in as BRIGHTCORP\someone.", @"Could not sign in as <domain>\someone.")]
     public void Masks_the_machine_and_domain_names(string text, string expected) => Assert.Equal(expected, Windows.Apply(text));
 
-    [Fact]
-    public void Masks_credentials_in_a_URL() =>
-        Assert.Equal("Could not reach https://<token>@example.com/feed", Windows.Apply("Could not reach https://deploy:hunter2@example.com/feed"));
+    [Theory]
+    [InlineData("Could not reach https://deploy:hunter2@example.com/feed", "Could not reach https://<token>@example.com/feed")]
+    [InlineData("Could not reach https://deploy:p@ss@example.com/feed", "Could not reach https://<token>@example.com/feed")]
+    public void Masks_credentials_in_a_URL(string text, string expected) => Assert.Equal(expected, Windows.Apply(text));
 
     // Parameter names like these fill .NET stack traces.
     [Fact]
