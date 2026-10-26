@@ -3,7 +3,7 @@ namespace Oopsling.Tests;
 public class MaskTests
 {
     // Made-up home folders and user names: no real one reaches a test.
-    private static readonly Mask Windows = new(@"C:\Users\Wren", "Wren");
+    private static readonly Mask Windows = new(@"C:\Users\Wren", "Wren", "WRENS-PC", "BRIGHTCORP");
     private static readonly Mask Linux = new("/home/wren", "wren");
 
     // Token-shaped values are built at run time, so no literal ever reaches the history.
@@ -22,7 +22,22 @@ public class MaskTests
     [InlineData("C--Users-Wren-project", "C--Users-<user>-project")]
     [InlineData("Access denied for WREN.", "Access denied for <user>.")]
     [InlineData(@"\\server\share\wren\notes.txt", @"\\server\share\<user>\notes.txt")]
+    [InlineData("C%3A%5CUsers%5CWren%5Cnotes.txt", "C%3A%5CUsers%5C<user>%5Cnotes.txt")]
     public void Masks_the_user_name_wherever_it_appears(string text, string expected) => Assert.Equal(expected, Windows.Apply(text));
+
+    [Theory]
+    [InlineData(@"Access to \\WRENS-PC\share was denied.", @"Access to \\<machine>\share was denied.")]
+    [InlineData(@"Could not sign in as BRIGHTCORP\someone.", @"Could not sign in as <domain>\someone.")]
+    public void Masks_the_machine_and_domain_names(string text, string expected) => Assert.Equal(expected, Windows.Apply(text));
+
+    [Fact]
+    public void Masks_credentials_in_a_URL() =>
+        Assert.Equal("Could not reach https://<token>@example.com/feed", Windows.Apply("Could not reach https://deploy:hunter2@example.com/feed"));
+
+    // Parameter names like these fill .NET stack traces.
+    [Fact]
+    public void Leaves_a_token_parameter_in_a_stack_trace() =>
+        Assert.Equal("at Feed.Load(CancellationToken cancellationToken)", Windows.Apply("at Feed.Load(CancellationToken cancellationToken)"));
 
     // A stack trace full of mangled method names would be no use to anyone.
     [Fact]
@@ -33,7 +48,7 @@ public class MaskTests
 
     [Theory]
     [InlineData("api_key=abc123", "api_key=<token>")]
-    [InlineData("Invalid password hunter2", "Invalid password <token>")]
+    [InlineData("Login failed, password: hunter2", "Login failed, password: <token>")]
     public void Masks_the_value_after_a_secret_name(string text, string expected) => Assert.Equal(expected, Windows.Apply(text));
 
     [Fact]
