@@ -1,0 +1,7 @@
+# Blank issues stay on: a crash report filed from a host's window arrives as a blank issue with its title and body filled
+# in, and with blank issues off, someone who doesn't maintain the repo may get the template picker instead.
+blank_issues_enabled: true
+contact_links:
+  - name: A crash report held something personal
+    url: https://github.com/hazeliscoding/oopsling/security/advisories/new
+    about: Send it privately, so it isn't published again. SECURITY.md says what to include.

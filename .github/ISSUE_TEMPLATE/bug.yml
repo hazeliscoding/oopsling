@@ -1,0 +1,31 @@
+name: Bug
+description: Oopsling did something wrong, or didn't do what it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: If a crash report held something personal, don't file it here. Use the private link on the previous page instead.
+  - type: textarea
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Oopsling version
+      placeholder: 0.1.0-preview.1
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: OS and .NET version
+      placeholder: Windows 11, .NET 10
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: NativeAOT
+      options:
+        - "Yes"
+        - "No"
