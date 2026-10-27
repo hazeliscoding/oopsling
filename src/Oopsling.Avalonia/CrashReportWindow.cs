@@ -86,25 +86,40 @@ public sealed class CrashReportWindow : Window
 
     /// <summary>
     /// Once <paramref name="owner"/> is open, shows the newest report the user hasn't seen over it. Does nothing when the
-    /// app hasn't crashed since a report was last shown. Call it where the main window is created.
+    /// app hasn't crashed since a report was last shown. Call it where the main window is created. An app without one,
+    /// such as a tray app, passes no owner, and the report shows at once in the middle of the screen.
     /// </summary>
-    public static void ShowUnshown(Window owner)
+    public static void ShowUnshown(Window? owner = null) => ShowUnshown(owner, CrashReports.TakeUnshown);
+
+    // Takes the report through take, so tests don't need CrashReports.Start's process-wide handler.
+    internal static void ShowUnshown(Window? owner, Func<CrashReport?> take)
     {
         // The report is read after the main window is up, so it costs the launch nothing.
-        if (owner.IsVisible)
+        if (owner is null || owner.IsVisible)
         {
-            Show(owner);
+            Show();
         }
         else
         {
-            owner.Opened += (_, _) => Show(owner);
+            owner.Opened += (_, _) => Show();
         }
 
-        static void Show(Window owner)
+        void Show()
         {
-            if (CrashReports.TakeUnshown() is { } report)
+            if (take() is not { } report)
             {
-                new CrashReportWindow(report).Show(owner);
+                return;
+            }
+
+            var window = new CrashReportWindow(report);
+            if (owner is null)
+            {
+                window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                window.Show();
+            }
+            else
+            {
+                window.Show(owner);
             }
         }
     }

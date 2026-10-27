@@ -55,6 +55,18 @@ public sealed class CrashReportWindowTests
         return true;
     }, CancellationToken.None);
 
+    [Fact]
+    public Task With_no_owner_it_shows_the_report_at_once() => Session.Dispatch(() =>
+    {
+        var opened = new List<Window>();
+        using var _ = Window.WindowOpenedEvent.AddClassHandler<CrashReportWindow>((window, _) => opened.Add(window));
+
+        CrashReportWindow.ShowUnshown(null, () => new CrashReport("Sample", "hazeliscoding/staypaw", ShortReport));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Null(Assert.Single(opened).Owner);
+    }, CancellationToken.None);
+
     private static CrashReportWindow Open(string text)
     {
         var window = new CrashReportWindow(new CrashReport("Sample", "hazeliscoding/staypaw", text));
