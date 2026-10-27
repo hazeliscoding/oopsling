@@ -1,0 +1,64 @@
+name: Fresh install
+
+# Follows the README in a new Avalonia app on each OS, with the packages from nuget.org. It runs after each release, once
+# nuget.org serves the new version, and by hand for any published version.
+on:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: A version on nuget.org, like 0.1.0-preview.1
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    # A manual run of Release is a dry run on a branch, so only a tag's run published anything.
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && startsWith(github.event.workflow_run.head_branch, 'v'))
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Work out the version
+        id: version
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          TAG: ${{ github.event.workflow_run.head_branch }}
+        run: echo "version=${INPUT_VERSION:-${TAG#v}}" >> "$GITHUB_OUTPUT"
+
+      # A new version takes nuget.org some minutes to validate and index.
+      - name: Wait for nuget.org to serve it
+        shell: bash
+        timeout-minutes: 45
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          v="$(echo "$VERSION" | tr '[:upper:]' '[:lower:]')"
+          until curl -sfI "https://api.nuget.org/v3-flatcontainer/oopsling.avalonia/$v/oopsling.avalonia.$v.nupkg" > /dev/null; do
+            sleep 30
+          done
+
+      - name: Follow the README in a new app
+        shell: bash
+        timeout-minutes: 10
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: scripts/fresh-install-check.sh "$VERSION"
