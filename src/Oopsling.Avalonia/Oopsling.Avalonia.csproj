@@ -12,7 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" />
+    <!-- The oldest 12.x, so the package never makes a host upgrade Avalonia. Tests and the sample run the newest. -->
+    <PackageReference Include="Avalonia" VersionOverride="12.0.0" />
   </ItemGroup>
 
   <ItemGroup>
