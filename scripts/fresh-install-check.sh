@@ -43,7 +43,7 @@ trap 'rm -rf "$work" || true' EXIT
 dotnet new install Avalonia.Templates --debug:custom-hive "$work/hive" > /dev/null
 dotnet new avalonia.app -o "$work/FreshApp" -n FreshApp --debug:custom-hive "$work/hive" > /dev/null
 cd "$work/FreshApp"
-dotnet add package Oopsling.Avalonia --version "$version" > /dev/null
+dotnet add package Oopsling.Avalonia --version "$version" > "$work/add.log" || { cat "$work/add.log"; fail "Oopsling.Avalonia $version couldn't be added"; }
 
 START="$start" SHOW="$show" "$py" - << 'EOF'
 import os, re

@@ -44,7 +44,8 @@ jobs:
           TAG: ${{ github.event.workflow_run.head_branch }}
         run: echo "version=${INPUT_VERSION:-${TAG#v}}" >> "$GITHUB_OUTPUT"
 
-      # A new version takes nuget.org some minutes to validate and index.
+      # A new version takes nuget.org some minutes to validate and index. Restore reads each package's list of versions,
+      # which can lag behind the package itself, so the check waits until both lists name it.
       - name: Wait for nuget.org to serve it
         shell: bash
         timeout-minutes: 45
@@ -52,8 +53,10 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           v="$(echo "$VERSION" | tr '[:upper:]' '[:lower:]')"
-          until curl -sfI "https://api.nuget.org/v3-flatcontainer/oopsling.avalonia/$v/oopsling.avalonia.$v.nupkg" > /dev/null; do
-            sleep 30
+          for id in oopsling oopsling.avalonia; do
+            until curl -sf "https://api.nuget.org/v3-flatcontainer/$id/index.json" | grep -q "\"$v\""; do
+              sleep 30
+            done
           done
 
       - name: Follow the README in a new app
