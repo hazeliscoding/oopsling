@@ -143,6 +143,7 @@ A dogfooding log in `docs/dogfooding.md`, kept from M3 on: crashes reported thro
 - WPF and WinForms windows.
 - More hosts, one at a time. Sweepling comes first, because it makes the same no-network promise. Next come Shybun, Tattlebun and Overglance as each one ships. After them come Gil Sweep, XIV Vault's desktop app, Prompuff and Carmine Workbench. Each host needs a public repo with issues turned on, or the issue link opens a 404.
 - The window's text in other languages.
+- A way for users without a GitHub account to send a report. One option is a contact line the host passes to `Start`, which the window shows as "No GitHub account? Copy the report and send it to …". A `mailto:` link is the other, but mail apps limit a link's length more strictly and less predictably than browsers do. Users who couldn't file never appear in the dogfooding log, so the host's audience decides when this is needed: before any host whose users are mostly not developers.
 
 ## Not planned
 
