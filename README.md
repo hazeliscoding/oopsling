@@ -5,6 +5,12 @@
   </picture>
 </h1>
 
+<p align="center">
+  <a href="https://github.com/hazeliscoding/oopsling/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/hazeliscoding/oopsling/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+  <a href="https://www.nuget.org/packages/Oopsling"><img alt="Oopsling on NuGet" src="https://img.shields.io/nuget/v/Oopsling?label=Oopsling"></a>
+  <a href="https://www.nuget.org/packages/Oopsling.Avalonia"><img alt="Oopsling.Avalonia on NuGet" src="https://img.shields.io/nuget/v/Oopsling.Avalonia?label=Oopsling.Avalonia"></a>
+</p>
+
 **Oopsling turns a crash in your .NET app into a GitHub issue the user files themselves, and sends nothing on its own.**
 
 If your app promises no telemetry, you can't tell when it crashes on someone else's PC. The crash reporters that exist send their reports to a server or by email, which breaks that promise. And a user whose app just vanished has nothing to paste into an issue.
