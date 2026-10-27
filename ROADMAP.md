@@ -141,7 +141,7 @@ A dogfooding log in `docs/dogfooding.md`, kept from M3 on: crashes reported thro
 - A Windows package that reads the Event Log at the next launch, for crashes that leave no managed exception.
 - An unclean-exit marker ("closed unexpectedly last time"), if it can tell a crash from being ended in Task Manager or a forced reboot.
 - WPF and WinForms windows.
-- Sweepling, Shybun and Tattlebun as hosts.
+- More hosts, one at a time. Sweepling comes first, because it makes the same no-network promise. Next come Shybun, Tattlebun and Overglance as each one ships. After them come Gil Sweep, XIV Vault's desktop app, Prompuff and Carmine Workbench. Each host needs a public repo with issues turned on, or the issue link opens a 404.
 - The window's text in other languages.
 
 ## Not planned
