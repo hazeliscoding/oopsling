@@ -67,6 +67,22 @@ public sealed class CrashReportWindowTests
         Assert.Null(Assert.Single(opened).Owner);
     }, CancellationToken.None);
 
+    [Fact]
+    public Task Reads_the_reports_once_however_often_the_owner_opens() => Session.Dispatch(() =>
+    {
+        var owner = new Window();
+        var takes = 0;
+
+        CrashReportWindow.ShowUnshown(owner, () => { takes++; return null; });
+        owner.Show();
+        Dispatcher.UIThread.RunJobs();
+        owner.Hide();
+        owner.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(1, takes);
+    }, CancellationToken.None);
+
     private static CrashReportWindow Open(string text)
     {
         var window = new CrashReportWindow(new CrashReport("Sample", "hazeliscoding/staypaw", text));

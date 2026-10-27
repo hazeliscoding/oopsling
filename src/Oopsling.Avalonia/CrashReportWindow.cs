@@ -87,7 +87,8 @@ public sealed class CrashReportWindow : Window
     /// <summary>
     /// Once <paramref name="owner"/> is open, shows the newest report the user hasn't seen over it. Does nothing when the
     /// app hasn't crashed since a report was last shown. Call it where the main window is created. An app without one,
-    /// such as a tray app, passes no owner, and the report shows at once in the middle of the screen.
+    /// such as a tray app, passes no owner, and the report shows at once in the middle of the screen. Such an app has to
+    /// keep running when its last window closes, with <c>ShutdownMode.OnExplicitShutdown</c>, or Dismiss would end it.
     /// </summary>
     public static void ShowUnshown(Window? owner = null) => ShowUnshown(owner, CrashReports.TakeUnshown);
 
@@ -101,7 +102,14 @@ public sealed class CrashReportWindow : Window
         }
         else
         {
-            owner.Opened += (_, _) => Show();
+            // Opened is raised again each time a hidden window is shown, and the reports are read once.
+            owner.Opened += Opened;
+        }
+
+        void Opened(object? sender, EventArgs e)
+        {
+            owner.Opened -= Opened;
+            Show();
         }
 
         void Show()
@@ -126,18 +134,27 @@ public sealed class CrashReportWindow : Window
 
     private async void ReportOnGitHub(object? sender, RoutedEventArgs e)
     {
-        try
+        if (!_report.FitsInLink)
         {
-            if (!_report.FitsInLink)
+            try
             {
                 await SetClipboard();
             }
+            catch (Exception)
+            {
+                // The link holds only part of a long report, and the user would paste whatever the clipboard held before.
+                Say("The report couldn't be copied, so GitHub wasn't opened. Select the report above and copy it from there.");
+                return;
+            }
+        }
 
+        try
+        {
             _report.OpenIssue();
         }
         catch (Exception)
         {
-            // The host is just starting: a missing browser or clipboard mustn't take it down.
+            // The host is just starting: a missing browser mustn't take it down.
             Say("No browser opened. Copy the report and file it on GitHub yourself.");
         }
     }
