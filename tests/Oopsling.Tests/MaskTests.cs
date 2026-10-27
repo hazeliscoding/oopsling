@@ -15,6 +15,7 @@ public class MaskTests
     [InlineData(@"Could not find file 'C:\Users\Wren\AppData\x.json'.", @"Could not find file '<home>\AppData\x.json'.")]
     [InlineData("Could not find file 'C:/Users/Wren/AppData/x.json'.", "Could not find file '<home>/AppData/x.json'.")]
     [InlineData(@"c:\users\wren\x", @"<home>\x")]
+    [InlineData(@"Could not read C:\\Users\\Wren\\x.json", @"Could not read <home>\\x.json")]
     public void Masks_the_home_folder(string text, string expected) => Assert.Equal(expected, Windows.Apply(text));
 
     [Fact]
@@ -26,6 +27,29 @@ public class MaskTests
     [InlineData(@"\\server\share\wren\notes.txt", @"\\server\share\<user>\notes.txt")]
     [InlineData("C%3A%5CUsers%5CWren%5Cnotes.txt", "C%3A%5CUsers%5C<user>%5Cnotes.txt")]
     public void Masks_the_user_name_wherever_it_appears(string text, string expected) => Assert.Equal(expected, Windows.Apply(text));
+
+    [Theory]
+    // A renamed account keeps its old folder, whose name isn't the user name.
+    [InlineData(@"C:\Users\Wren", "someone", "C--Users-Wren-project", "C--Users-<user>-project")]
+    [InlineData(@"C:\Users\Wren", "someone", "C%3A%5CUsers%5CWren%5Cnotes", "C%3A%5CUsers%5C<user>%5Cnotes")]
+    // An 8.3 short name, or another user's folder.
+    [InlineData(@"C:\Users\Wren", "Wren", @"C:\Users\WRENEX~1\AppData", @"C:\Users\<user>\AppData")]
+    [InlineData(@"C:\Users\Wren", "Wren", @"C:\Users\Wrenna\AppData", @"C:\Users\<user>\AppData")]
+    [InlineData("/home/wren", "wren", "/home/someone/.config", "/home/<user>/.config")]
+    // A name with a dot or a space, written with other punctuation in its place.
+    [InlineData(@"C:\Users\wren.example", "wren.example", "C--Users-wren-example-project", "C--Users-<user>-project")]
+    [InlineData(@"C:\Users\Wren Example", "wren", "file:///C:/Users/Wren%20Example/notes.txt", "file:///C:/Users/<user>/notes.txt")]
+    public void Masks_a_users_folder_in_any_shape(string home, string user, string text, string expected) =>
+        Assert.Equal(expected, new Mask(home, user).Apply(text));
+
+    // Windows cuts a machine's NetBIOS name to 15 characters, and host names still carry the whole of it.
+    [Fact]
+    public void Masks_the_whole_of_a_machine_name_that_Windows_cut_short() =>
+        Assert.Equal("Could not reach <machine>.local", new Mask(@"C:\Users\Wren", "Wren", "WRENS-GAMING-DE").Apply("Could not reach wrens-gaming-desktop.local"));
+
+    [Fact]
+    public void Leaves_paths_alone_when_the_home_folder_is_the_root() =>
+        Assert.Equal("/usr/lib/libSkiaSharp.so", new Mask("/", "wren").Apply("/usr/lib/libSkiaSharp.so"));
 
     [Theory]
     [InlineData(@"Access to \\WRENS-PC\share was denied.", @"Access to \\<machine>\share was denied.")]
@@ -59,11 +83,12 @@ public class MaskTests
     [Fact]
     public void Masks_a_long_opaque_value() => Assert.Equal("key <token>", Windows.Apply("key " + string.Concat(Enumerable.Repeat("a1", 20))));
 
-    // The mask runs in a dying process, so no message may keep it busy. Each of these took seconds once.
+    // The mask runs in a dying process on up to 256 KB, so no message may keep it busy. Runs of these a hundredth this
+    // long took seconds once.
     [Theory]
-    [InlineData("auth", 400)]
-    [InlineData("a", 20_000)]
-    [InlineData("://", 20_000)]
+    [InlineData("auth", 65_536)]
+    [InlineData("a", 262_144)]
+    [InlineData("://", 87_381)]
     public void Masks_a_pathological_message_quickly(string part, int count)
     {
         var text = string.Concat(Enumerable.Repeat(part, count));

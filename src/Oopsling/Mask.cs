@@ -6,21 +6,40 @@ namespace Oopsling;
 /// Hides the home folder, the user, machine and domain names, and token-like strings before a report is written,
 /// since a report becomes a public issue. It masks too much rather than too little.
 /// </summary>
-internal sealed partial class Mask(string home, string user, string machine = "", string domain = "")
+internal sealed partial class Mask
 {
-    // The longer names go first, so a machine named after its user still reads as the machine.
-    private readonly (Regex Pattern, string Placeholder)[] _names =
-        [.. new[] { (machine, "<machine>"), (domain, "<domain>"), (user, "<user>") }
-            .Where(name => name.Item1.Length > 0)
-            .Select(name => (Name(name.Item1), name.Item2))];
+    // Stands in for a dot or a space in a name, which can come back as other punctuation or percent-encoded.
+    private const string Punctuation = "(?:[^\\p{L}\\p{N}]|%[0-9A-Fa-f]{2}){1,3}";
+
+    private readonly Regex? _home;
+    private readonly (Regex Pattern, string Placeholder)[] _names;
+
+    public Mask(string home, string user, string machine = "", string domain = "")
+    {
+        // A home folder that is the root, as some service accounts have, would mask every path.
+        var trimmed = home.TrimEnd('\\', '/');
+        var isRoot = trimmed.Length == 0 || (trimmed.Length == 2 && trimmed[1] == ':');
+
+        // Either slash, doubled in JSON or percent-encoded in a URL, and not the start of a longer name like C:\Users\Wrenna.
+        _home = isRoot ? null : new(
+            string.Join(@"(?:\\{1,2}|/|%5C|%2F)", trimmed.Split('\\', '/').Select(Regex.Escape)) + "(?![A-Za-z0-9])",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+        // A renamed account keeps its old folder, so the folder's name is masked as well as the user name. The longer
+        // names go first, so a machine named after its user still reads as the machine, and the folder "Wren Example"
+        // isn't half masked as the user "wren".
+        var folder = isRoot ? "" : trimmed[(trimmed.LastIndexOfAny(['\\', '/']) + 1)..];
+        _names = [.. new[] { (machine, "<machine>"), (domain, "<domain>"), (user, "<user>"), (folder, "<user>") }
+            .Where(name => NamePunctuation().Replace(name.Item1, "").Length > 0)
+            .OrderByDescending(name => name.Item1.Length)
+            .Select(name => (Name(name.Item1, cutShort: name.Item2 == "<machine>" && name.Item1.Length == 15), name.Item2))];
+    }
 
     public string Apply(string text)
     {
-        if (home.Length > 0)
+        if (_home is not null)
         {
-            text = text
-                .Replace(home, "<home>", StringComparison.OrdinalIgnoreCase)
-                .Replace(home.Replace('\\', '/'), "<home>", StringComparison.OrdinalIgnoreCase);
+            text = _home.Replace(text, "<home>");
         }
 
         foreach (var (pattern, placeholder) in _names)
@@ -28,6 +47,7 @@ internal sealed partial class Mask(string home, string user, string machine = ""
             text = pattern.Replace(text, placeholder);
         }
 
+        text = UsersFolder().Replace(text, "<user>");
         text = UrlCredentials().Replace(text, "<token>@");
         text = SecretValue().Replace(text, "${name}${separator}<token>");
         text = KnownToken().Replace(text, "<token>");
@@ -35,10 +55,23 @@ internal sealed partial class Mask(string home, string user, string machine = ""
     }
 
     // Matched on its own, not only inside the home folder: paths reach messages in other shapes, like
-    // C--Users-<name>-project, and URLs percent-encode the separators around it.
-    private static Regex Name(string name) => new(
-        $"(?:(?<![A-Za-z0-9])|(?<=%[0-9A-Fa-f]{{2}})){Regex.Escape(name)}(?![A-Za-z0-9])",
-        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    // C--Users-<name>-project, and URLs percent-encode the separators around it. Windows cuts a machine's NetBIOS name
+    // to 15 characters, so one that long may be the start of a longer host name.
+    private static Regex Name(string name, bool cutShort)
+    {
+        var parts = NamePunctuation().Split(name).Where(part => part.Length > 0).Select(Regex.Escape);
+        return new(
+            $"(?:(?<![A-Za-z0-9])|(?<=%[0-9A-Fa-f]{{2}})){string.Join(Punctuation, parts)}{(cutShort ? "[A-Za-z0-9-]*" : "")}(?![A-Za-z0-9])",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    }
+
+    [GeneratedRegex(@"[^\p{L}\p{N}]+", RegexOptions.CultureInvariant)]
+    private static partial Regex NamePunctuation();
+
+    // Whatever follows Users\ or home/ is someone's folder, even when it isn't this user's: an 8.3 short name like
+    // WRENEX~1, or another account.
+    [GeneratedRegex(@"(?<=(?:^|[^A-Za-z0-9]|%[0-9A-Fa-f]{2})(?:Users|home)(?:\\{1,2}|/|%5C|%2F))[^\\/%\s'""<>|:*?]+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex UsersFolder();
 
     // The patterns below run in a dying process, so none may backtrack on a long run: each starts only where a run starts,
     // or looks a bounded distance ahead.
