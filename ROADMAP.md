@@ -170,6 +170,12 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 
 **Done when:** every gate above is ticked, and a Staypaw release with Oopsling in it has shipped.
 
+**So far, on 2026-10-27:**
+
+- `1.0.0` is on nuget.org, published from the `v1.0.0` tag once the owner approved it ([run 40518425648](https://github.com/hazeliscoding/oopsling/actions/runs/40518425648)), with a [GitHub release](https://github.com/hazeliscoding/oopsling/releases/tag/v1.0.0).
+- The fresh-install check passed against `1.0.0` on all three OSes ([run 40521634563](https://github.com/hazeliscoding/oopsling/actions/runs/40521634563)). Its first, automatic run failed on Windows and Linux: nuget.org served the package before restore's list of versions named it. It now waits for both lists.
+- Staypaw takes `1.0.0` on `main` ([pull request 21](https://github.com/hazeliscoding/staypaw/pull/21)). What's left is a Staypaw release with it, v1.2, whose timing is the owner's call.
+
 ## How we'll know it works
 
 A dogfooding log in `docs/dogfooding.md`, kept from M3 on: crashes reported through Oopsling, and any report that held something it shouldn't have. That last count must stay zero. After 1.0, public signals: NuGet downloads, issues, pull requests, and other apps using it.
