@@ -32,4 +32,4 @@ CrashReportWindow.ShowUnshown(desktop.MainWindow);
 
 A tray app with no main window calls `CrashReportWindow.ShowUnshown()` with no owner instead.
 
-This is a preview, so the API may change before 1.0. The repo has the details, the decisions behind them, and the roadmap: https://github.com/hazeliscoding/oopsling
+The repo has the details, the decisions behind them, and the roadmap: https://github.com/hazeliscoding/oopsling

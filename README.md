@@ -60,7 +60,7 @@ There are two packages. `Oopsling` has no UI and works in any .NET app. `Oopslin
 ## Install
 
 ```sh
-dotnet add package Oopsling.Avalonia --prerelease
+dotnet add package Oopsling.Avalonia
 ```
 
 It brings in `Oopsling`, the core, with it.
@@ -99,7 +99,7 @@ That's all. The report is read once the main window is open, so a launch costs o
 
 ## Status
 
-**Preview.** The first preview, `0.1.0-preview.1`, is on NuGet as [`Oopsling`](https://www.nuget.org/packages/Oopsling) and [`Oopsling.Avalonia`](https://www.nuget.org/packages/Oopsling.Avalonia), and its API may still change before 1.0. It works on Windows, macOS and Linux, NativeAOT or not. [Staypaw](https://github.com/hazeliscoding/staypaw)'s next release, v1.2, is the first app to ship with it. [ROADMAP.md](ROADMAP.md) has the decisions and milestones.
+**1.0.** It's on NuGet as [`Oopsling`](https://www.nuget.org/packages/Oopsling) and [`Oopsling.Avalonia`](https://www.nuget.org/packages/Oopsling.Avalonia), and its API follows semantic versioning from here. It works on Windows, macOS and Linux, NativeAOT or not. [Staypaw](https://github.com/hazeliscoding/staypaw)'s next release, v1.2, is the first app to ship with it. [ROADMAP.md](ROADMAP.md) has the decisions and milestones.
 
 ## Alternatives
 
@@ -111,7 +111,7 @@ Checked against their own repos, docs and NuGet pages on 2026-10-27.
 | Report goes to | A file, then a GitHub issue the user files | Email, through the DrDump service or your SMTP server | Stays local; copy or the share sheet | Stays local; copy | sentry.io or your own Sentry server |
 | User sees it first | Yes, in the window and on GitHub | Yes, unless set to silent | Yes | Yes | No; your code can edit or drop events in `SetBeforeSend` |
 | Also does | Nothing else | Screenshots | Breadcrumbs, lifecycle tracking | About, What's New, log and screenshot windows | Grouping, alerts, release health, performance |
-| Latest release | 0.1.0-preview.1, 2026-10-27 | 1.6.0, 2021-01-02 | 1.0.9, 2026-08-31 | 0.1.0, 2026-10-10 | 6.12.1, 2026-10-13 |
+| Latest release | 1.0.0, 2026-10-27 | 1.6.0, 2021-01-02 | 1.0.9, 2026-08-31 | 0.1.0, 2026-10-10 | 6.12.1, 2026-10-13 |
 
 **When to use something else:**
 
