@@ -16,7 +16,7 @@ public class CrashReportsTests
     [InlineData("../evil")]
     [InlineData("hazeliscoding/..")]
     public void Start_wants_the_repo_as_owner_and_name(string repo) =>
-        Assert.Throws<ArgumentException>(() => CrashReports.Start("Sample", repo));
+        Assert.Contains($"\"{repo}\"", Assert.Throws<ArgumentException>(() => CrashReports.Start("Sample", repo)).Message);
 
     [Theory]
     [InlineData("hazeliscoding/staypaw")]
@@ -25,7 +25,7 @@ public class CrashReportsTests
 
     [Fact]
     public void Start_wants_an_app_name_it_can_use_as_a_folder() =>
-        Assert.Throws<ArgumentException>(() => CrashReports.Start("Sample/../elsewhere", "hazeliscoding/staypaw"));
+        Assert.Contains("\"Sample/../elsewhere\"", Assert.Throws<ArgumentException>(() => CrashReports.Start("Sample/../elsewhere", "hazeliscoding/staypaw")).Message);
 
     [Fact]
     public void TakeUnshown_wants_Start_first() => Assert.Throws<InvalidOperationException>(CrashReports.TakeUnshown);

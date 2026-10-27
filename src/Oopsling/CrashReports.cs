@@ -27,13 +27,13 @@ public static partial class CrashReports
         ArgumentException.ThrowIfNullOrWhiteSpace(appName);
         if (appName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
         {
-            throw new ArgumentException("The app name becomes a folder name, so it can't hold path characters.", nameof(appName));
+            throw new ArgumentException($"The app name becomes a folder name, so it can't hold path characters, but got \"{appName}\".", nameof(appName));
         }
 
         // The repo goes into the issue link, so anything more than owner/name would only break it at a user's next launch.
         if (!IsRepo(repo))
         {
-            throw new ArgumentException("Expected the GitHub repo as owner/name, like hazeliscoding/staypaw.", nameof(repo));
+            throw new ArgumentException($"Expected the GitHub repo as owner/name, like hazeliscoding/staypaw, but got \"{repo}\".", nameof(repo));
         }
 
         // Everything is worked out now, so a crash only formats and writes one file.
@@ -67,7 +67,7 @@ public static partial class CrashReports
     {
         if (_started is not { } started)
         {
-            throw new InvalidOperationException("Call CrashReports.Start first.");
+            throw new InvalidOperationException("CrashReports.Start hasn't been called. Call it first thing in Main, before showing reports.");
         }
 
         return TakeUnshown(started.Folder, started.App, started.Repo);
