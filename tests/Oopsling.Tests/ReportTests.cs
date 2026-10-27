@@ -58,6 +58,33 @@ public class ReportTests
         Assert.Contains("line\n   ...\n```", report);
     }
 
+    // The cut before masking can split a name the mask then misses, and masking can shrink what's left below the limit,
+    // so the end of the masked text has to go.
+    [Fact]
+    public void Drops_a_name_that_the_cut_before_masking_split()
+    {
+        const string Prefix = "System.InvalidOperationException: ";
+        var token = string.Concat(Enumerable.Repeat("a1", 32)) + " ";
+        var length = 262_144 - Prefix.Length - "Wren Exa".Length;
+        var filler = string.Concat(Enumerable.Repeat(token, length / token.Length)).PadRight(length);
+
+        var report = Report.Format(new InvalidOperationException(filler + "Wren Example and more"), "Sample 1.0", Details, new Mask(@"C:\Users\Wren Example", "someone"));
+
+        Assert.DoesNotContain("Wren", report, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // A message holding ``` would end the code block, and the rest would read as Markdown, where an @mention notifies
+    // someone when the issue is filed.
+    [Fact]
+    public void Keeps_a_message_with_backticks_inside_the_code_block()
+    {
+        var report = Format(new InvalidOperationException("```\n@someone"));
+
+        Assert.Contains("\n````text\n", report);
+        Assert.Contains("@someone", report);
+        Assert.EndsWith("\n````\n\n" + Details, report.TrimEnd());
+    }
+
     [Fact]
     public void Survives_an_exception_whose_ToString_throws() => Assert.Contains(nameof(BrokenException), Format(new BrokenException()));
 
