@@ -46,6 +46,20 @@ public class CrashReportTests
         Assert.EndsWith("   ...\n```\n\n- App: Sample 1.0\n- OS: Made-up OS 1\n", body);
     }
 
+    // An AggregateException can put hundreds of messages on one line, and a report with backticks in it has a longer fence.
+    [Fact]
+    public void A_report_whose_first_line_is_too_long_for_a_link_keeps_as_much_of_it_as_fits()
+    {
+        var text = Report.Format(new LongException("``` " + new string('x', 10_000), "\n   at Sample.Run()"), "Sample 1.0", "- App: Sample 1.0", Mask);
+
+        var report = new CrashReport("Sample", "hazeliscoding/staypaw", text);
+
+        Assert.InRange(report.IssueLink.Length, CrashReport.MaxLinkLength - 200, CrashReport.MaxLinkLength);
+        var body = Parameters(report.IssueLink)["body"];
+        Assert.Contains("LongException: ``` xxxxxxxxxx", body);
+        Assert.EndsWith("x\n   ...\n````\n\n- App: Sample 1.0\n", body);
+    }
+
     private static Dictionary<string, string> Parameters(string link) =>
         link[(link.IndexOf('?') + 1)..].Split('&').Select(p => p.Split('=')).ToDictionary(p => p[0], p => Uri.UnescapeDataString(p[1]));
 

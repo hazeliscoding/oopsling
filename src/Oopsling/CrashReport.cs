@@ -57,19 +57,41 @@ public sealed class CrashReport
     private static string Cut(string repo, string title, string body)
     {
         var lines = body.Split('\n');
-        var close = Array.LastIndexOf(lines, "```");
+
+        // A report's fence is longer than any run of backticks inside it, so the last line of backticks closes it.
+        var close = Array.FindLastIndex(lines, line => line.Length >= 3 && line.All(c => c == '`'));
         var stack = close < 0 ? lines : lines[..close];
         var tail = "   ...\n" + (close < 0 ? "" : string.Join('\n', lines[close..]));
         var budget = MaxLinkLength - Link(repo, title, CutNote + "\n\n" + tail).Length;
         var kept = new StringBuilder(CutNote + "\n\n");
         foreach (var line in stack)
         {
-            budget -= Uri.EscapeDataString(line + "\n").Length;
-            if (budget < 0)
+            var cost = Uri.EscapeDataString(line + "\n").Length;
+            if (cost > budget)
             {
+                // A line too long to keep whole, like an AggregateException's messages, keeps what fits. Its "\n" costs 3.
+                var room = budget - 3;
+                var start = kept.Length;
+                foreach (var rune in line.EnumerateRunes())
+                {
+                    room -= Uri.EscapeDataString(rune.ToString()).Length;
+                    if (room < 0)
+                    {
+                        break;
+                    }
+
+                    kept.Append(rune.ToString());
+                }
+
+                if (kept.Length > start)
+                {
+                    kept.Append('\n');
+                }
+
                 break;
             }
 
+            budget -= cost;
             kept.Append(line).Append('\n');
         }
 
