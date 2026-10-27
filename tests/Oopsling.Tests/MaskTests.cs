@@ -81,6 +81,8 @@ public class MaskTests
     [InlineData("Authorization: Bearer abc/def", "Authorization: Bearer <token>")]
     [InlineData("Server=db;Uid=app;Pwd=hunter2;", "Server=db;Uid=app;Pwd=<token>")]
     [InlineData("AccountName=wrenstore;AccountKey=abc123==", "AccountName=wrenstore;AccountKey=<token>")]
+    [InlineData("API_KEYS=abc,def", "API_KEYS=<token>")]
+    [InlineData("ApiKeyValue=abc123", "ApiKeyValue=<token>")]
     public void Masks_the_value_after_a_secret_name(string text, string expected) => Assert.Equal(expected, Windows.Apply(text));
 
     // A stack trace puts a colon after the exception's type, and the message after it must stay readable.
