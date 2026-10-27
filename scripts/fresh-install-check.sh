@@ -38,7 +38,8 @@ launch() {
 }
 
 work="$(mktemp -d)"
-trap 'rm -rf "$work"' EXIT
+# On Windows the killed app can still hold its files for a moment; a leftover temp folder mustn't fail the check.
+trap 'rm -rf "$work" || true' EXIT
 dotnet new install Avalonia.Templates --debug:custom-hive "$work/hive" > /dev/null
 dotnet new avalonia.app -o "$work/FreshApp" -n FreshApp --debug:custom-hive "$work/hive" > /dev/null
 cd "$work/FreshApp"
