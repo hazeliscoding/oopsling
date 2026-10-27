@@ -15,6 +15,8 @@ If your app promises no telemetry, you can't tell when it crashes on someone els
 
 **After.** At the next launch, the app says it closed because of an error and shows exactly what it would report. One button opens a filled-in GitHub issue in the user's own browser. They read it, edit it if they like, and press Submit, or don't.
 
+![The sample app crashes when its Crash button is pressed. At its next launch, a window says "Oopsling Sample closed because of an error." and shows the report, with Report on GitHub, Copy and Dismiss.](docs/demo.gif)
+
 A made-up report, as Oopsling writes it. The first line becomes the issue's title:
 
 ````markdown
