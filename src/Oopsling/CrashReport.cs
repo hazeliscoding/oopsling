@@ -15,7 +15,7 @@ public sealed class CrashReport
 
     internal CrashReport(string app, string repo, string text)
     {
-        App = app;
+        AppName = app;
         Text = text;
         var split = text.IndexOf("\n\n", StringComparison.Ordinal);
         Title = split < 0 ? text.TrimEnd('\n') : text[..split];
@@ -29,7 +29,7 @@ public sealed class CrashReport
     }
 
     /// <summary>The app's name, as passed to <see cref="CrashReports.Start"/>.</summary>
-    public string App { get; }
+    public string AppName { get; }
 
     /// <summary>The issue's title: the report's first line.</summary>
     public string Title { get; }
@@ -46,7 +46,10 @@ public sealed class CrashReport
     /// </summary>
     public bool FitsInLink { get; }
 
-    /// <summary>Opens <see cref="IssueLink"/> in the user's browser through the OS shell. Nothing is sent until they submit it.</summary>
+    /// <summary>
+    /// Opens <see cref="IssueLink"/> in the user's browser through the OS shell. Nothing is sent until they submit it.
+    /// Throws when the OS has no way to open a link, as on a machine without a browser.
+    /// </summary>
     public void OpenIssue() => Process.Start(new ProcessStartInfo(IssueLink) { UseShellExecute = true })?.Dispose();
 
     private static string Link(string repo, string title, string body) =>

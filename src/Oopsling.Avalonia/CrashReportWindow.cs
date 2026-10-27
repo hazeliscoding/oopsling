@@ -19,7 +19,7 @@ public sealed class CrashReportWindow : Window
     internal CrashReportWindow(CrashReport report)
     {
         _report = report;
-        Title = $"{report.App} closed because of an error";
+        Title = $"{report.AppName} closed because of an error";
         Width = 760;
         Height = 560;
         MinWidth = 420;
@@ -50,7 +50,7 @@ public sealed class CrashReportWindow : Window
             Margin = new(0, 0, 0, 12),
             Children =
             {
-                new TextBlock { Text = $"{report.App} closed because of an error.", FontSize = 18, FontWeight = FontWeight.SemiBold },
+                new TextBlock { Text = $"{report.AppName} closed because of an error.", FontSize = 18, FontWeight = FontWeight.SemiBold },
                 new TextBlock
                 {
                     Text = "This is the report it made, and nothing has been sent. Report on GitHub opens it as a new issue "
