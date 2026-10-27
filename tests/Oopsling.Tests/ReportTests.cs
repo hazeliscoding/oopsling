@@ -48,6 +48,16 @@ public class ReportTests
         Assert.DoesNotContain("Wren", report, StringComparison.OrdinalIgnoreCase);
     }
 
+    // Masking a huge message would keep the dying process busy, and no issue could hold it anyway.
+    [Fact]
+    public void Cuts_a_huge_message_before_masking_it()
+    {
+        var report = Format(new InvalidOperationException(string.Concat(Enumerable.Repeat("line\n", 200_000))));
+
+        Assert.InRange(report.Length, 60_000, 70_000);
+        Assert.Contains("line\n   ...\n```", report);
+    }
+
     [Fact]
     public void Survives_an_exception_whose_ToString_throws() => Assert.Contains(nameof(BrokenException), Format(new BrokenException()));
 

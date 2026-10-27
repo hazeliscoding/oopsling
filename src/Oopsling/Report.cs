@@ -10,7 +10,7 @@ internal static class Report
         {app} crashed: {Cause(exception).GetType().Name}
 
         ```text
-        {mask.Apply(Describe(exception))}
+        {mask.Apply(Cut(Describe(exception)))}
         ```
 
         {details}
@@ -20,6 +20,20 @@ internal static class Report
     // Avalonia calls event handlers through reflection, so the exception that ended the app often arrives wrapped.
     private static Exception Cause(Exception exception) =>
         exception is TargetInvocationException { InnerException: { } inner } ? Cause(inner) : exception;
+
+    // Masking a huge message would keep the dying process busy, and no issue could hold it anyway. The cut falls on a
+    // space or a line's end, so it doesn't split a name the mask has to find.
+    private static string Cut(string text)
+    {
+        const int MaxLength = 65_536;
+        if (text.Length <= MaxLength)
+        {
+            return text;
+        }
+
+        var end = text.AsSpan(0, MaxLength).LastIndexOfAny(" \t\n");
+        return text[..(end > 0 ? end : MaxLength)] + "\n   ...";
+    }
 
     // The type, message and stack of the exception and of each inner one.
     private static string Describe(Exception exception)

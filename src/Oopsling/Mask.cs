@@ -40,15 +40,18 @@ internal sealed partial class Mask(string home, string user, string machine = ""
         $"(?:(?<![A-Za-z0-9])|(?<=%[0-9A-Fa-f]{{2}})){Regex.Escape(name)}(?![A-Za-z0-9])",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
+    // The patterns below run in a dying process, so none may backtrack on a long run: each starts only where a run starts,
+    // or looks a bounded distance ahead.
+
     // The user and password in https://user:password@host. A password can hold @, ?, # or / unescaped, so this runs to
-    // the last @ before a space. It also masks the host of a URL with an @ further on, like an npm scope: too much
-    // rather than too little.
-    [GeneratedRegex(@"(?<=://)\S*@", RegexOptions.CultureInvariant)]
+    // the last @ before a space, up to 256 characters on. It also masks the host of a URL with an @ further on, like an
+    // npm scope: too much rather than too little.
+    [GeneratedRegex(@"(?<=://)\S{0,256}@", RegexOptions.CultureInvariant)]
     private static partial Regex UrlCredentials();
 
     // The value after a name like token=, api_key= or password:. Unlike Sweepling's CommandLineMask, a space alone
     // doesn't count, or every "CancellationToken cancellationToken" in a stack trace would be masked.
-    [GeneratedRegex(@"(?<name>[\w-]*(token|secret|password|passwd|api[-_]?key|auth)[\w-]*)(?<separator>\s*[=:]\s*)(?!<token>)\S+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"(?<![\w-])(?<name>(?=[\w-]*?(token|secret|password|passwd|api[-_]?key|auth))(?>[\w-]+))(?<separator>\s*[=:]\s*)(?!<token>)\S+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex SecretValue();
 
     // GitHub, OpenAI and Anthropic, Slack and AWS key prefixes, and JWTs.
@@ -56,6 +59,6 @@ internal sealed partial class Mask(string home, string user, string machine = ""
     private static partial Regex KnownToken();
 
     // A run of 32 or more letters and digits that has both, like a key or an ID.
-    [GeneratedRegex(@"(?=[A-Za-z0-9+=_-]*\d)(?=[A-Za-z0-9+=_-]*[A-Za-z])[A-Za-z0-9+=_-]{32,}", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"(?<![A-Za-z0-9+=_-])(?=[A-Za-z0-9+=_-]*\d)(?=[A-Za-z0-9+=_-]*[A-Za-z])[A-Za-z0-9+=_-]{32,}", RegexOptions.CultureInvariant)]
     private static partial Regex LongOpaque();
 }

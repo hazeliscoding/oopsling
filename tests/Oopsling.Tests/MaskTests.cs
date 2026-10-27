@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Oopsling.Tests;
 
 public class MaskTests
@@ -56,4 +58,20 @@ public class MaskTests
 
     [Fact]
     public void Masks_a_long_opaque_value() => Assert.Equal("key <token>", Windows.Apply("key " + string.Concat(Enumerable.Repeat("a1", 20))));
+
+    // The mask runs in a dying process, so no message may keep it busy. Each of these took seconds once.
+    [Theory]
+    [InlineData("auth", 400)]
+    [InlineData("a", 20_000)]
+    [InlineData("://", 20_000)]
+    public void Masks_a_pathological_message_quickly(string part, int count)
+    {
+        var text = string.Concat(Enumerable.Repeat(part, count));
+        Windows.Apply("warm up");
+
+        var time = Stopwatch.StartNew();
+        Windows.Apply(text);
+
+        Assert.True(time.Elapsed < TimeSpan.FromSeconds(1), $"Took {time.Elapsed}.");
+    }
 }
