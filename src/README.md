@@ -7,9 +7,12 @@ When an unhandled exception ends your app, Oopsling writes one masked report to 
 
 ## Use it in an Avalonia app
 
-Add `Oopsling.Avalonia`. Start Oopsling first thing in `Main`, with your app's name and its GitHub repo:
+Add `Oopsling.Avalonia`. In `Program.cs`, start Oopsling first thing in `Main`, with your app's name and its GitHub repo:
 
 ```csharp
+using Oopsling;
+
+[STAThread]
 public static void Main(string[] args)
 {
     CrashReports.Start("My App", "owner/my-app");
@@ -17,13 +20,16 @@ public static void Main(string[] args)
 }
 ```
 
-Then, when you create your main window, show the last crash's report if it hasn't been shown:
+In `App.axaml.cs`, show the last crash's report over your main window:
 
 ```csharp
-desktop.MainWindow = window;
-CrashReportWindow.ShowUnshown(window);
+using Oopsling.Avalonia;
+
+// In OnFrameworkInitializationCompleted:
+desktop.MainWindow = new MainWindow();
+CrashReportWindow.ShowUnshown(desktop.MainWindow);
 ```
 
-An app without a main window, such as a tray app, calls `CrashReportWindow.ShowUnshown()` with no owner instead.
+A tray app with no main window calls `CrashReportWindow.ShowUnshown()` with no owner instead.
 
 This is a preview, so the API may change before 1.0. The repo has the details, the decisions behind them, and the roadmap: https://github.com/hazeliscoding/oopsling
