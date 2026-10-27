@@ -78,7 +78,15 @@ public class MaskTests
     [Theory]
     [InlineData("api_key=abc123", "api_key=<token>")]
     [InlineData("Login failed, password: hunter2", "Login failed, password: <token>")]
+    [InlineData("Authorization: Bearer abc/def", "Authorization: Bearer <token>")]
+    [InlineData("Server=db;Uid=app;Pwd=hunter2;", "Server=db;Uid=app;Pwd=<token>")]
+    [InlineData("AccountName=wrenstore;AccountKey=abc123==", "AccountName=wrenstore;AccountKey=<token>")]
     public void Masks_the_value_after_a_secret_name(string text, string expected) => Assert.Equal(expected, Windows.Apply(text));
+
+    // A stack trace puts a colon after the exception's type, and the message after it must stay readable.
+    [Fact]
+    public void Leaves_the_message_after_an_exception_type_named_like_a_secret() =>
+        Assert.Equal("AuthenticationException: The remote certificate is invalid.", Windows.Apply("AuthenticationException: The remote certificate is invalid."));
 
     [Fact]
     public void Masks_a_long_opaque_value() => Assert.Equal("key <token>", Windows.Apply("key " + string.Concat(Enumerable.Repeat("a1", 20))));

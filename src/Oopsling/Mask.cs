@@ -49,7 +49,7 @@ internal sealed partial class Mask
 
         text = UsersFolder().Replace(text, "<user>");
         text = UrlCredentials().Replace(text, "<token>@");
-        text = SecretValue().Replace(text, "${name}${separator}<token>");
+        text = SecretValue().Replace(text, "${name}${separator}${scheme}<token>");
         text = KnownToken().Replace(text, "<token>");
         return LongOpaque().Replace(text, "<token>");
     }
@@ -82,9 +82,11 @@ internal sealed partial class Mask
     [GeneratedRegex(@"(?<=://)\S{0,256}@", RegexOptions.CultureInvariant)]
     private static partial Regex UrlCredentials();
 
-    // The value after a name like token=, api_key= or password:. Unlike Sweepling's CommandLineMask, a space alone
-    // doesn't count, or every "CancellationToken cancellationToken" in a stack trace would be masked.
-    [GeneratedRegex(@"(?<![\w-])(?<name>(?=[\w-]*?(token|secret|password|passwd|api[-_]?key|auth))(?>[\w-]+))(?<separator>\s*[=:]\s*)(?!<token>)\S+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    // The value after a name like token=, Pwd=, AccountKey= or password:, and after Bearer or Basic in an Authorization
+    // header. Unlike Sweepling's CommandLineMask, a space alone doesn't count, or every "CancellationToken
+    // cancellationToken" in a stack trace would be masked. Nor does an exception's type, whose colon comes before its
+    // message, as in "AuthenticationException: The remote certificate is invalid".
+    [GeneratedRegex(@"(?<![\w-])(?<name>(?=[\w-]*?(token|secret|password|passwd|pwd|auth|key(?![\w-])))(?>[\w-]+))(?<!Exception)(?<separator>\s*[=:]\s*)(?<scheme>(Bearer|Basic|Token)\s+)?(?!<token>)\S+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex SecretValue();
 
     // GitHub, OpenAI and Anthropic, Slack and AWS key prefixes, and JWTs.
