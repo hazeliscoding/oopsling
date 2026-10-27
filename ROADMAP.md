@@ -130,15 +130,16 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 
 - [x] A release workflow: a `v*` tag packs both packages and publishes them to nuget.org through trusted publishing.
 - [x] `0.1.0-preview.1` on nuget.org.
-- [ ] Staypaw takes `Oopsling.Avalonia` from nuget.org, with its `GuardrailTests` still passing.
+- [x] Staypaw takes `Oopsling.Avalonia` from nuget.org, with its `GuardrailTests` still passing.
 
 **Done when:** a Staypaw build made to crash shows Oopsling's window at its next launch and opens a filled-in issue page for Staypaw's repo, and Staypaw's CI is green.
 
-**So far, on 2026-10-27:**
+**Done on 2026-10-27:**
 
 - A dry run of the release workflow packed both packages ([run 40445453285](https://github.com/hazeliscoding/oopsling/actions/runs/40445453285)). The `v0.1.0-preview.1` tag published both, with their symbols, once the owner approved it ([run 40451880159](https://github.com/hazeliscoding/oopsling/actions/runs/40451880159)). The first try failed before pushing anything: the nuget.org policy's environment read `release.`, with a stray full stop.
 - On Windows 11, a Staypaw build with the published package, made to throw on the UI thread, left one report. The home folder was masked, and so was the user name in a `C--Users-<user>-…` path. At the next launch the NativeAOT build showed the window, and Report on GitHub opened `hazeliscoding/staypaw/issues/new` in the default browser with the title and report filled in. Nothing was filed. The test copy ran while the owner's Staypaw was stopped, and the test report was deleted afterwards.
-- Staypaw's [pull request 19](https://github.com/hazeliscoding/staypaw/pull/19) takes the package from nuget.org.
+- Staypaw's [pull request 19](https://github.com/hazeliscoding/staypaw/pull/19) takes the package from nuget.org, with a guard test that Oopsling's assemblies use no network, a dated decision, and a line in its trust contract saying where a crash report goes. Its CI passed ([run 40453275984](https://github.com/hazeliscoding/staypaw/actions/runs/40453275984)), and it's merged into `main` for v1.2.
+- Not checked: the window on macOS and Linux outside headless tests, a repo with issue templates, and a signed-out user signing in and landing back on the filled-in page.
 
 ## M4: 1.0
 
