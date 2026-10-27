@@ -40,6 +40,35 @@ public sealed class RecorderTests : IDisposable
         Assert.StartsWith("Sample 1.0 crashed", File.ReadAllText(Path.Combine(Folder, names[^1]!)));
     }
 
+    // A clock set back would name the new report before the ones already there, and pruning would delete it at once.
+    [Fact]
+    public void A_report_written_after_the_clock_went_back_still_sorts_last()
+    {
+        Directory.CreateDirectory(Folder);
+        for (var i = 0; i < 10; i++)
+        {
+            File.WriteAllText(Path.Combine(Folder, $"crash-20990101T0000{i:00}000Z.md"), "from a clock set forward");
+        }
+
+        Recorder().Record(new InvalidOperationException("boom"));
+
+        var names = Directory.GetFiles(Folder).Select(Path.GetFileName).Order(StringComparer.Ordinal).ToArray();
+        Assert.Equal(10, names.Length);
+        Assert.StartsWith("Sample 1.0 crashed", File.ReadAllText(Path.Combine(Folder, names[^1]!)));
+    }
+
+    // Two threads can crash at once, and each raises the handler.
+    [Fact]
+    public void Records_only_the_first_crash()
+    {
+        var recorder = Recorder();
+
+        recorder.Record(new InvalidOperationException("first"));
+        recorder.Record(new InvalidOperationException("second"));
+
+        Assert.Contains("first", File.ReadAllText(Assert.Single(Directory.GetFiles(Folder, "crash-*.md"))));
+    }
+
     // The app is already crashing: a report that can't be written must not replace that crash with another.
     [Fact]
     public void Never_throws_when_the_folder_cannot_be_written()
