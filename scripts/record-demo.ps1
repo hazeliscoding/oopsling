@@ -17,6 +17,7 @@ public static class Pointer
     [StructLayout(LayoutKind.Sequential)]
     public struct Point { public int X, Y; }
 
+    [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr window);
     [DllImport("user32.dll")] public static extern bool GetCursorPos(out Point point);
     [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
     [DllImport("user32.dll")] private static extern void mouse_event(uint flags, uint dx, uint dy, uint data, UIntPtr extra);
@@ -39,9 +40,15 @@ function Find-Button([int]$processId, [string]$name) {
         [System.Windows.Automation.PropertyCondition]::new($auto::NameProperty, $name))
     $deadline = (Get-Date).AddSeconds(30)
     while ((Get-Date) -lt $deadline) {
-        foreach ($window in $auto::RootElement.FindAll([System.Windows.Automation.TreeScope]::Children, $ofProcess)) {
-            $found = $window.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $button)
+        foreach ($top in $auto::RootElement.FindAll([System.Windows.Automation.TreeScope]::Children, $ofProcess)) {
+            $found = $top.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $button)
             if ($found -and -not $found.Current.BoundingRectangle.IsEmpty) {
+                # Avalonia lists a window it owns under its owner, so the button's own window is its nearest window.
+                $window = $found
+                while ($window.Current.ControlType -ne [System.Windows.Automation.ControlType]::Window) {
+                    $window = [System.Windows.Automation.TreeWalker]::ControlViewWalker.GetParent($window)
+                }
+                [Pointer]::SetForegroundWindow([IntPtr]$window.Current.NativeWindowHandle) | Out-Null
                 return @{ Element = $found; Window = $window }
             }
         }
@@ -66,6 +73,11 @@ function Move-To($element) {
 }
 
 Remove-Item -Recurse -Force (Join-Path $env:LOCALAPPDATA 'Oopsling Sample\crashes') -ErrorAction SilentlyContinue
+
+# The runner's own console would fill the background, and the crash's text would land in it.
+(New-Object -ComObject Shell.Application).MinimizeAll()
+Start-Sleep -Seconds 1
+$quiet = @{ RedirectStandardOutput = (Join-Path ([IO.Path]::GetTempPath()) 'sample-out.txt'); RedirectStandardError = (Join-Path ([IO.Path]::GetTempPath()) 'sample-err.txt') }
 $clip = Join-Path ([IO.Path]::GetTempPath()) 'oopsling-demo.mkv'
 $record = [System.Diagnostics.ProcessStartInfo]::new('ffmpeg', "-y -loglevel error -f gdigrab -framerate 20 -draw_mouse 1 -i desktop -c:v libx264rgb -crf 0 -preset ultrafast `"$clip`"")
 $record.RedirectStandardInput = $true
@@ -74,7 +86,7 @@ $ffmpeg = [System.Diagnostics.Process]::Start($record)
 Start-Sleep -Seconds 1
 
 try {
-    $first = Start-Process $Sample -PassThru
+    $first = Start-Process $Sample -PassThru @quiet
     $crash = Find-Button $first.Id 'Crash'
     Start-Sleep -Milliseconds 1200
     Move-To $crash.Element
@@ -83,7 +95,7 @@ try {
     if (-not $first.WaitForExit(15000)) { throw 'The sample didn''t crash.' }
     Start-Sleep -Milliseconds 1500
 
-    $second = Start-Process $Sample -PassThru
+    $second = Start-Process $Sample -PassThru @quiet
     $report = Find-Button $second.Id 'Report on GitHub'
     Start-Sleep -Seconds 4
     Move-To $report.Element
