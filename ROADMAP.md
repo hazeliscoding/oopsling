@@ -72,6 +72,13 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
   - **`Start` takes the repo only as `owner/name`,** in GitHub's own characters, and a second call throws. A user, machine or domain name the OS can't give goes unmasked by name, rather than stopping the host in `Main`; the home folder is still masked.
   - **`CrashReport.App` is now `AppName`,** after `Start`'s parameter.
 
+## Decisions in M4 (2026-10-27)
+
+- **Issue templates don't break the link while blank issues stay on.** On the scratch repo with an issue form, the link opened the blank form with the title and body filled in. With blank issues off, it still did for the repo's owner, but GitHub may show other users the template picker, and that wasn't checked. So the README tells hosts to keep blank issues on, and Oopsling's own tracker does.
+- **A crash report that held something personal goes to private vulnerability reporting,** not an issue, since an issue would publish it again. This gives up discussing it in the open.
+- **The README's quick start is checked by running it:** the fresh-install check takes its lines from the README, so the two can't drift apart. This gives up checking the README's prose.
+- **The demo GIF is recorded on a Windows runner,** whose desktop belongs to nobody, since the recording moves the real mouse. The runner draws no pointer, and has no GitHub sign-in, so the GIF ends on the window, not the filled-in issue. This gives up showing the browser.
+
 ## M0: Placeholder
 
 - [x] .NET 10 solution with central package versions: `Oopsling`, `Oopsling.Avalonia`, the tests, and a sample Avalonia 12 app with a Crash button that does nothing yet.
@@ -143,15 +150,23 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 
 ## M4: 1.0
 
-- [ ] README: install, a demo GIF from the sample, and the comparison with alternatives checked again.
-- [ ] `CONTRIBUTING.md` and `SECURITY.md`.
-- [ ] The OSS launch gates:
-  - [ ] the core journey works end to end: crash, next launch, report, filled-in issue;
-  - [ ] a fresh install from nuget.org works in a new Avalonia app on each OS, following the README;
-  - [ ] the README quick start is accurate;
-  - [ ] CI is green and there are no known critical bugs;
-  - [ ] error messages are understandable;
-  - [ ] the issue tracker is ready for reports.
+- [x] README: install, a demo GIF from the sample, and the comparison with alternatives checked again.
+- [x] `CONTRIBUTING.md` and `SECURITY.md`.
+- [x] The OSS launch gates:
+  - [x] the core journey works end to end: crash, next launch, report, filled-in issue;
+  - [x] a fresh install from nuget.org works in a new Avalonia app on each OS, following the README;
+  - [x] the README quick start is accurate;
+  - [x] CI is green and there are no known critical bugs;
+  - [x] error messages are understandable;
+  - [x] the issue tracker is ready for reports.
+
+**The gates, checked on 2026-10-27:**
+
+- **The core journey:** on Windows, through the sample in M2 and through Staypaw in M3, from the crash to the filled-in issue page. On Linux and macOS, the fresh-install check below crashes a new app, and its next launch takes the report and opens the window without crashing. The link opens there through `xdg-open` and `open`, measured in M2.
+- **A fresh install, following the README:** `fresh-install.yml` makes an app from Avalonia's own template on Windows, Linux and macOS. It adds `Oopsling.Avalonia` from nuget.org and pastes in the README's quick start lines, then checks the crash, the report and the next launch. It passed with `0.1.0-preview.1` ([run 40514630382](https://github.com/hazeliscoding/oopsling/actions/runs/40514630382)). As positive controls, it failed when the README lost a quick start line and when a line couldn't compile. It runs after every release.
+- **CI** passed on all three OSes ([run 40515631065](https://github.com/hazeliscoding/oopsling/actions/runs/40515631065)), and no issues are open. The pre-release review's findings are fixed (see "Decisions in M3").
+- **Error messages:** each one `Start` throws names the value it refused, and a missing `Start` says how to fix it. The window's messages say what happened and what to do instead.
+- **The issue tracker:** a bug form, blank issues kept on so filled-in links work, and GitHub's private vulnerability reporting for a crash report that held something personal, as `SECURITY.md` says.
 
 **Done when:** every gate above is ticked, and a Staypaw release with Oopsling in it has shipped.
 
