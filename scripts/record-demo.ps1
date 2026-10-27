@@ -82,13 +82,15 @@ $clip = Join-Path ([IO.Path]::GetTempPath()) 'oopsling-demo.mkv'
 $record = [System.Diagnostics.ProcessStartInfo]::new('ffmpeg', "-y -loglevel error -f gdigrab -framerate 20 -draw_mouse 1 -i desktop -c:v libx264rgb -crf 0 -preset ultrafast `"$clip`"")
 $record.RedirectStandardInput = $true
 $record.UseShellExecute = $false
+
+# Recording starts once the first window has drawn, so the GIF doesn't open on an empty frame.
+$first = Start-Process $Sample -PassThru @quiet
+$crash = Find-Button $first.Id 'Crash'
+Start-Sleep -Milliseconds 800
 $ffmpeg = [System.Diagnostics.Process]::Start($record)
-Start-Sleep -Seconds 1
 
 try {
-    $first = Start-Process $Sample -PassThru @quiet
-    $crash = Find-Button $first.Id 'Crash'
-    Start-Sleep -Milliseconds 1200
+    Start-Sleep -Milliseconds 1500
     Move-To $crash.Element
     Start-Sleep -Milliseconds 400
     [Pointer]::Click()
