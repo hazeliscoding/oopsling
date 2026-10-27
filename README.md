@@ -55,13 +55,53 @@ flowchart LR
 
 There are two packages. `Oopsling` has no UI and works in any .NET app. `Oopsling.Avalonia` adds the window.
 
+## Install
+
+```sh
+dotnet add package Oopsling.Avalonia --prerelease
+```
+
+It brings in `Oopsling`, the core, with it.
+
+## Quick start
+
+In `Program.cs`, start Oopsling first thing in `Main`, with your app's name as users see it and the GitHub repo that reports are filed in:
+
+```csharp
+using Oopsling;
+
+[STAThread]
+public static void Main(string[] args)
+{
+    CrashReports.Start("My App", "owner/my-app");
+    BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+}
+```
+
+In `App.axaml.cs`, show the last crash's report over your main window:
+
+```csharp
+using Oopsling.Avalonia;
+
+// In OnFrameworkInitializationCompleted:
+desktop.MainWindow = new MainWindow();
+CrashReportWindow.ShowUnshown(desktop.MainWindow);
+```
+
+That's all. The report is read once the main window is open, so a launch costs only the handler and a check for the folder.
+
+- **A tray app** with no main window calls `CrashReportWindow.ShowUnshown()` with no owner, and has to keep running when its last window closes, with `ShutdownMode.OnExplicitShutdown`.
+- **Without Avalonia,** add `Oopsling` instead. At the next launch, `CrashReports.TakeUnshown()` returns the report the user hasn't seen, if there is one, with its `Text` to show and `OpenIssue()` to open the filled-in issue.
+- **Reports** are Markdown files in a `crashes` folder under the app's name in local app data: `%LOCALAPPDATA%` on Windows, `~/Library/Application Support` on macOS and `~/.local/share` on Linux. The newest 10 are kept.
+- **Issue templates:** if your repo has them, keep blank issues enabled. The link opens a blank issue with the report filled in, and with blank issues off, GitHub may show users the template picker instead.
+
 ## Status
 
-**Early development.** `CrashReports.Start` writes a masked report when an unhandled exception ends the app, on Windows, macOS and Linux, NativeAOT or not. At the next launch, `CrashReportWindow.ShowUnshown` shows it once, and Report on GitHub opens it as a filled-in issue in the user's browser. The first preview, `0.1.0-preview.1`, is on NuGet as [`Oopsling`](https://www.nuget.org/packages/Oopsling) and [`Oopsling.Avalonia`](https://www.nuget.org/packages/Oopsling.Avalonia), and its API may still change. [ROADMAP.md](ROADMAP.md) has the decisions and milestones. [Staypaw](https://github.com/hazeliscoding/staypaw) will be the first app to use it.
+**Preview.** The first preview, `0.1.0-preview.1`, is on NuGet as [`Oopsling`](https://www.nuget.org/packages/Oopsling) and [`Oopsling.Avalonia`](https://www.nuget.org/packages/Oopsling.Avalonia), and its API may still change before 1.0. It works on Windows, macOS and Linux, NativeAOT or not. [Staypaw](https://github.com/hazeliscoding/staypaw)'s next release, v1.2, is the first app to ship with it. [ROADMAP.md](ROADMAP.md) has the decisions and milestones.
 
 ## Alternatives
 
-Checked against their own repos, docs and NuGet pages on 2026-10-25.
+Checked against their own repos, docs and NuGet pages on 2026-10-27.
 
 | | Oopsling | [CrashReporter.NET](https://github.com/ravibpatel/CrashReporter.NET) | [Akeng.MauiCrashReporter](https://www.nuget.org/packages/Akeng.MauiCrashReporter) | [MaksIT.Core.UI](https://www.nuget.org/packages/MaksIT.Core.UI) | [Sentry for .NET](https://github.com/getsentry/sentry-dotnet) |
 |---|---|---|---|---|---|
@@ -69,18 +109,18 @@ Checked against their own repos, docs and NuGet pages on 2026-10-25.
 | Report goes to | A file, then a GitHub issue the user files | Email, through the DrDump service or your SMTP server | Stays local; copy or the share sheet | Stays local; copy | sentry.io or your own Sentry server |
 | User sees it first | Yes, in the window and on GitHub | Yes, unless set to silent | Yes | Yes | No; your code can edit or drop events in `SetBeforeSend` |
 | Also does | Nothing else | Screenshots | Breadcrumbs, lifecycle tracking | About, What's New, log and screenshot windows | Grouping, alerts, release health, performance |
-| Latest release | Planning | 1.6.0, 2021-01-02 | 1.0.9, 2026-08-31 | 0.1.0, 2026-10-10 | 6.12.1, 2026-10-13 |
+| Latest release | 0.1.0-preview.1, 2026-10-27 | 1.6.0, 2021-01-02 | 1.0.9, 2026-08-31 | 0.1.0, 2026-10-10 | 6.12.1, 2026-10-13 |
 
 **When to use something else:**
 
 - If sending reports is fine for your app, use Sentry: it groups crashes from every user, alerts you and tracks release health, none of which Oopsling will do. [BugSplat](https://docs.bugsplat.com/) adds minidumps and symbols.
 - On WinForms or WPF, for users without a GitHub account, CrashReporter.NET emails you the report. Its last release is from 2021; [d3sync's fork](https://github.com/d3sync/CrashReporter.NET) targets .NET 10.
 - On .NET MAUI, use Akeng.MauiCrashReporter.
-- If a local error window with Copy is enough for your Avalonia app, MaksIT.Core.UI has one today, and Oopsling is still being planned.
+- If a local error window with Copy is enough for your Avalonia app, MaksIT.Core.UI has one, along with About and log windows.
 
 ## Contributing
 
-Oopsling isn't ready for code contributions yet. Issues are welcome, above all from people who ship apps without telemetry: what you'd need in a crash report, and what must never be in one.
+Issues are welcome, above all from people who ship apps without telemetry: what you'd need in a crash report, and what must never be in one. [CONTRIBUTING.md](CONTRIBUTING.md) says how to build and test it. If a crash report held something personal, don't open an issue: [SECURITY.md](SECURITY.md) says how to send it privately.
 
 ## License
 
