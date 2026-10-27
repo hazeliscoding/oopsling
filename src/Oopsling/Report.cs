@@ -10,7 +10,7 @@ internal static class Report
         {app} crashed: {Cause(exception).GetType().Name}
 
         ```text
-        {mask.Apply(Cut(Describe(exception)))}
+        {Cut(mask.Apply(Cut(Describe(exception), 4 * MaxLength)), MaxLength)}
         ```
 
         {details}
@@ -21,18 +21,19 @@ internal static class Report
     private static Exception Cause(Exception exception) =>
         exception is TargetInvocationException { InnerException: { } inner } ? Cause(inner) : exception;
 
-    // Masking a huge message would keep the dying process busy, and no issue could hold it anyway. The cut falls on a
-    // space or a line's end, so it doesn't split a name the mask has to find.
-    private static string Cut(string text)
+    // No issue could hold more. Masking happens before the final cut, so that cut can't split a name the mask had to
+    // find. Only text far past it is dropped before masking, which would keep the dying process busy.
+    private const int MaxLength = 65_536;
+
+    private static string Cut(string text, int length)
     {
-        const int MaxLength = 65_536;
-        if (text.Length <= MaxLength)
+        if (text.Length <= length)
         {
             return text;
         }
 
-        var end = text.AsSpan(0, MaxLength).LastIndexOfAny(" \t\n");
-        return text[..(end > 0 ? end : MaxLength)] + "\n   ...";
+        var end = text.AsSpan(0, length).LastIndexOfAny(" \t\n");
+        return text[..(end > 0 ? end : length)] + "\n   ...";
     }
 
     // The type, message and stack of the exception and of each inner one.
