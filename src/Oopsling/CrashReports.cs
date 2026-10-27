@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Runtime;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace Oopsling;
 
@@ -8,22 +9,29 @@ namespace Oopsling;
 /// Writes a report when an unhandled exception ends the app. Oopsling sends nothing: the user reads the report and files
 /// it as a GitHub issue themselves.
 /// </summary>
-public static class CrashReports
+public static partial class CrashReports
 {
     private static (string Folder, string App, string Repo)? _started;
 
-    /// <summary>Starts recording crashes. Call it first thing in <c>Main</c>.</summary>
+    /// <summary>Starts recording crashes. Call it once, first thing in <c>Main</c>.</summary>
     /// <param name="appName">The app's name as users see it. Reports go in a <c>crashes</c> folder under it in local app data.</param>
     /// <param name="repo">The GitHub repo that reports are filed in, as <c>owner/name</c>.</param>
     public static void Start(string appName, string repo)
     {
+        // A second handler would record each crash twice.
+        if (_started is not null)
+        {
+            throw new InvalidOperationException("CrashReports.Start was already called. Call it once, first thing in Main.");
+        }
+
         ArgumentException.ThrowIfNullOrWhiteSpace(appName);
         if (appName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
         {
             throw new ArgumentException("The app name becomes a folder name, so it can't hold path characters.", nameof(appName));
         }
 
-        if (repo?.Split('/') is not [{ Length: > 0 }, { Length: > 0 }])
+        // The repo goes into the issue link, so anything more than owner/name would only break it at a user's next launch.
+        if (!IsRepo(repo))
         {
             throw new ArgumentException("Expected the GitHub repo as owner/name, like hazeliscoding/staypaw.", nameof(repo));
         }
@@ -31,16 +39,16 @@ public static class CrashReports
         // Everything is worked out now, so a crash only formats and writes one file.
         var version = Version();
         var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), appName, "crashes");
-        _started = (folder, appName, repo);
         var recorder = new Recorder(
             folder,
             $"{appName} {version.Split('+')[0]}",
             Details(appName, version),
             new Mask(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                Environment.UserName,
-                Environment.MachineName,
-                Environment.UserDomainName));
+                Read(() => Environment.UserName),
+                Read(() => Environment.MachineName),
+                Read(() => Environment.UserDomainName)));
+        _started = (folder, appName, repo);
 
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
@@ -86,6 +94,26 @@ public static class CrashReports
         {
             // The window is extra: a folder that can't be read mustn't stop the app from starting.
             return null;
+        }
+    }
+
+    internal static bool IsRepo(string? repo) => repo is not null && Repo().IsMatch(repo);
+
+    // GitHub's owner names hold letters, digits and hyphens, and repo names also dots and underscores, but aren't . or ..
+    [GeneratedRegex(@"\A[A-Za-z0-9-]+/(?!\.\.?\z)[A-Za-z0-9._-]+\z", RegexOptions.CultureInvariant)]
+    private static partial Regex Repo();
+
+    // Start runs first thing in Main, so a name the OS can't give, as when a domain controller is out of reach, goes
+    // unmasked by name rather than stopping the app. The home folder is still masked.
+    private static string Read(Func<string> name)
+    {
+        try
+        {
+            return name();
+        }
+        catch (Exception)
+        {
+            return "";
         }
     }
 

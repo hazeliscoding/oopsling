@@ -9,8 +9,19 @@ public class CrashReportsTests
     [InlineData("staypaw")]
     [InlineData("hazeliscoding/")]
     [InlineData("hazeliscoding/staypaw/issues")]
+    [InlineData("hazeliscoding/staypaw?labels=bug")]
+    [InlineData("hazeliscoding/staypaw#x")]
+    [InlineData(" hazeliscoding / staypaw ")]
+    [InlineData("hazeliscoding/staypaw\n")]
+    [InlineData("../evil")]
+    [InlineData("hazeliscoding/..")]
     public void Start_wants_the_repo_as_owner_and_name(string repo) =>
         Assert.Throws<ArgumentException>(() => CrashReports.Start("Sample", repo));
+
+    [Theory]
+    [InlineData("hazeliscoding/staypaw")]
+    [InlineData("some-owner/my.repo_name-2")]
+    public void A_repo_is_an_owner_and_a_name(string repo) => Assert.True(CrashReports.IsRepo(repo));
 
     [Fact]
     public void Start_wants_an_app_name_it_can_use_as_a_folder() =>
