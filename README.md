@@ -57,7 +57,7 @@ There are two packages. `Oopsling` has no UI and works in any .NET app. `Oopslin
 
 ## Status
 
-**Early development.** `CrashReports.Start` writes a masked report when an unhandled exception ends the app, on Windows, macOS and Linux, NativeAOT or not. At the next launch, `CrashReportWindow.ShowUnshown` shows it once, and Report on GitHub opens it as a filled-in issue in the user's browser. Nothing is published to NuGet yet. [ROADMAP.md](ROADMAP.md) has the decisions and milestones; M3, the first preview on NuGet, is under way. [Staypaw](https://github.com/hazeliscoding/staypaw) will be the first app to use it.
+**Early development.** `CrashReports.Start` writes a masked report when an unhandled exception ends the app, on Windows, macOS and Linux, NativeAOT or not. At the next launch, `CrashReportWindow.ShowUnshown` shows it once, and Report on GitHub opens it as a filled-in issue in the user's browser. The first preview, `0.1.0-preview.1`, is on NuGet as [`Oopsling`](https://www.nuget.org/packages/Oopsling) and [`Oopsling.Avalonia`](https://www.nuget.org/packages/Oopsling.Avalonia), and its API may still change. [ROADMAP.md](ROADMAP.md) has the decisions and milestones. [Staypaw](https://github.com/hazeliscoding/staypaw) will be the first app to use it.
 
 ## Alternatives
 
