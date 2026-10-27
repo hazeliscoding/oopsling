@@ -55,6 +55,23 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 - **The sample takes `--repo owner/name` as its first arguments,** so checks open the link for the private scratch repo `hazeliscoding/oopsling-scratch`, never for Oopsling's own issues.
 - **The window's tests render it with `Avalonia.Headless`,** a test-only package, so they run on every OS in CI.
 
+## Decisions in M3 (2026-10-26)
+
+- **Releasing:** pushing a `v*` tag on `main` runs `release.yml`, which builds, tests and packs in one job and publishes in another. Only the publish job can get a nuget.org key, through trusted publishing: GitHub's OIDC token buys a key that lasts an hour, so there's no long-lived secret. That job runs in the `release` environment, which takes only `v*` tags and waits for the owner's approval. Running the workflow by hand packs a `0.0.0-dryrun.N` version and publishes nothing. This gives up a one-step release; the approval is the owner's go-ahead in code.
+- **The window package depends on Avalonia 12.0.0,** the oldest 12.x, so it never makes a host upgrade Avalonia. Built against 12.1.4, it would have made Staypaw, on 12.1.3, upgrade to take it. Tests and the sample run the newest 12.x. This gives up building against anything newer than 12.0, and testing against 12.0 itself.
+- **A host without a main window passes no owner.** Staypaw is a tray app, so `ShowUnshown()` with no owner shows the report at once in the middle of the screen. The host has to keep running when its last window closes, as a tray app does.
+- **Both packages share one README,** `src/README.md`, and an icon rendered from the mark, since nuget.org takes neither relative links nor SVG.
+- **A host tries a local build before a version is published:** Staypaw took a `0.1.0-local.1` package from a folder first, since a nuget.org version can't be deleted. That's how the missing owner showed up.
+- **A review of both packages before the first publish** found that the masks could hang the dying process and that the user name got past them in several shapes. What changed:
+  - **Masking stays linear.** Each pattern starts only where a run starts, or looks a bounded distance ahead. At 256 KB, the inputs that once took minutes take a fifth of a second.
+  - **A report holds at most 64 KB of the exception's text,** cut after masking at a space or a line's end. Text past 256 KB is dropped before masking, and the end of what's left goes too, since a name that cut split could only be there. This gives up the rest of a huge message.
+  - **A user's folder is masked in every shape seen so far:** with either slash, doubled in JSON or percent-encoded. The folder's own name is masked too, for a renamed account, and so is whatever follows `Users\` or `home/`, for 8.3 names and other accounts. A dot or a space in a name matches whatever punctuation replaced it. A 15-character machine name, which Windows may have cut short, matches the rest of the host name. This gives up some text that only looks like a name, such as `/users/42` in a URL.
+  - **The code fence is longer than any run of backticks in the message,** so the message can't end the block. Outside it, an `@mention` would notify someone when the issue is filed.
+  - **A new report is always named after the newest one already there,** so a clock set back can't get it pruned, and a clock once set forward can't hide later crashes.
+  - **Only the first crash is recorded.** This gives up a second thread crashing at the same moment.
+  - **`Start` takes the repo only as `owner/name`,** in GitHub's own characters, and a second call throws. A user, machine or domain name the OS can't give goes unmasked by name, rather than stopping the host in `Main`; the home folder is still masked.
+  - **`CrashReport.App` is now `AppName`,** after `Start`'s parameter.
+
 ## M0: Placeholder
 
 - [x] .NET 10 solution with central package versions: `Oopsling`, `Oopsling.Avalonia`, the tests, and a sample Avalonia 12 app with a Crash button that does nothing yet.
@@ -111,7 +128,7 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 
 ## M3: Preview and Staypaw
 
-- [ ] A release workflow: a `v*` tag packs both packages and publishes them to nuget.org through trusted publishing.
+- [ ] A release workflow: a `v*` tag packs both packages and publishes them to nuget.org through trusted publishing. *Written: a dry run packed both ([run 40445453285](https://github.com/hazeliscoding/oopsling/actions/runs/40445453285)). The publish job waits for the nuget.org policy and the first tag.*
 - [ ] `0.1.0-preview.1` on nuget.org.
 - [ ] Staypaw takes `Oopsling.Avalonia` from nuget.org, with its `GuardrailTests` still passing.
 
