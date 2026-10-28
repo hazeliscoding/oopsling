@@ -14,7 +14,8 @@ public sealed class CrashReport
     {
         AppName = app;
         strings ??= new();
-        Strings = strings.Closed is null ? strings with { Closed = $"{app} closed because of an error." } : strings;
+        // A blank heading would leave the window without saying what happened.
+        Strings = string.IsNullOrWhiteSpace(strings.Closed) ? strings with { Closed = $"{app} closed because of an error." } : strings;
         Text = text;
         var split = text.IndexOf("\n\n", StringComparison.Ordinal);
         Title = split < 0 ? text.TrimEnd('\n') : text[..split];

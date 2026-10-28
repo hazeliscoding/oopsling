@@ -6,7 +6,9 @@ namespace Oopsling;
 /// </summary>
 public sealed record CrashReportStrings
 {
-    /// <summary>The window's heading, and its title without the full stop. English names the app.</summary>
+    /// <summary>
+    /// The window's heading, and its title without the full stop. Left out or blank, it's English with the app's name.
+    /// </summary>
     public string? Closed { get; init; }
 
     /// <summary>Under the heading: what the report is, and that nothing was sent.</summary>

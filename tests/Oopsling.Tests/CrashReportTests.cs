@@ -81,6 +81,7 @@ public class CrashReportTests
         Assert.Equal("Sample closed because of an error.", new CrashReport("Sample", "hazeliscoding/staypaw", text).Strings.Closed);
         Assert.Equal("Sample closed because of an error.", new CrashReport("Sample", "hazeliscoding/staypaw", text, strings: new() { Copy = "Kopieren" }).Strings.Closed);
         Assert.Equal("Sample ist abgestürzt.", new CrashReport("Sample", "hazeliscoding/staypaw", text, strings: new() { Closed = "Sample ist abgestürzt." }).Strings.Closed);
+        Assert.Equal("Sample closed because of an error.", new CrashReport("Sample", "hazeliscoding/staypaw", text, strings: new() { Closed = " " }).Strings.Closed);
     }
 
     [Fact]
