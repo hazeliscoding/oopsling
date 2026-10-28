@@ -113,7 +113,7 @@ Everything else in M4 shipped as 1.0.0.
 
 - [x] A `Start` overload takes a contact, an email address or a link, and the window shows "No GitHub account? Send the report to …" under its buttons. Existing `Start(appName, repo)` calls don't change. Clicking the contact copies the report, then opens it (see the decisions above).
 - [x] A host can give the window its own text for every string it shows, in any language, with English as the default. The note at the top of a cut report, which reaches the issue, takes the host's text too. Oopsling ships no translations of its own.
-- [ ] Staypaw takes 1.1 with a contact the owner picks.
+- [x] Staypaw takes 1.1 with a contact the owner picks.
 
 **Done when:** the sample shows the contact line and a German window from host-given text; a test proves `Start(appName, repo)` behaves as in 1.0; and the fresh-install check passes against 1.1.0 on each OS.
 
@@ -124,7 +124,7 @@ Everything else in M4 shipped as 1.0.0.
 - Positive controls: accepting `http://`, spaces or `?` in a contact each fails a test, and so do a contact click that doesn't copy the report and one that opens before it copies. The branch where the copy fails isn't tested, since the headless clipboard can't be made to fail.
 - A review agent read the change. Its fixes: a blank heading falls back to English, the contact sentence wraps, addresses are an allow-list, and the README example says to give every string.
 - 1.1.0 is on nuget.org, and the fresh-install check passed against it on Windows, macOS and Linux: [run 40627254210](https://github.com/hazeliscoding/oopsling/actions/runs/40627254210).
-- Left: Staypaw takes 1.1 with the contact `staypaw.crashes.happier582@passinbox.com`, an alias the owner made for it.
+- Staypaw's `main` takes 1.1.0 (hazeliscoding/staypaw@2ce2a74) and passes `staypaw.crashes.happier582@passinbox.com`, an alias the owner made for it, as the contact (hazeliscoding/staypaw@87b4e39).
 
 ## M6: Sweepling, the second host
 
