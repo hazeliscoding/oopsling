@@ -121,9 +121,9 @@ public static partial class CrashReports
     [GeneratedRegex(@"\A[A-Za-z0-9-]+/(?!\.\.?\z)[A-Za-z0-9._-]+\z", RegexOptions.CultureInvariant)]
     private static partial Regex Repo();
 
-    // One address with a dotted domain. It leaves out what would end the address in a mailto link, or add a recipient or
-    // a header to it.
-    [GeneratedRegex(@"\A[^@\s?#%&:/,;<>""]+@[^@\s?#%&:/,;<>"".]+(?:\.[^@\s?#%&:/,;<>"".]+)+\z", RegexOptions.CultureInvariant)]
+    // One plain ASCII address with a dotted domain. Anything else could add a recipient or a header to a mailto link, or
+    // hide in the window, as a right-to-left override does.
+    [GeneratedRegex(@"\A[A-Za-z0-9._+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+\z", RegexOptions.CultureInvariant)]
     private static partial Regex Email();
 
     // Start runs first thing in Main, so a name the OS can't give, as when a domain controller is out of reach, goes

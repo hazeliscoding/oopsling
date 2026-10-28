@@ -42,6 +42,10 @@ public class CrashReportsTests
     [InlineData("https://example.com/a b")]
     [InlineData("file:///C:/Windows/notepad.exe")]
     [InlineData("javascript:alert(1)")]
+    [InlineData("a\u0001b@example.com")]
+    [InlineData("crashes@‮example.com")]
+    [InlineData("crashes@exämple.com")]
+    [InlineData("{crashes}@example.com")]
     public void Anything_else_is_not_a_contact(string contact) => Assert.False(CrashReports.IsContact(contact));
 
     [Theory]
