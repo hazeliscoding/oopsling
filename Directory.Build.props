@@ -11,7 +11,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
 
-    <Version>0.1.0-dev</Version>
+    <Version>1.1.0-dev</Version>
     <Authors>Hazel Granados</Authors>
     <Company>Oopsling</Company>
     <Product>Oopsling</Product>
