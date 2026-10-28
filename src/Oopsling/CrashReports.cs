@@ -11,12 +11,16 @@ namespace Oopsling;
 /// </summary>
 public static partial class CrashReports
 {
-    private static (string Folder, string App, string Repo)? _started;
+    private static (string Folder, string App, string Repo, CrashReportStrings? Strings)? _started;
 
     /// <summary>Starts recording crashes. Call it once, first thing in <c>Main</c>.</summary>
     /// <param name="appName">The app's name as users see it. Reports go in a <c>crashes</c> folder under it in local app data.</param>
     /// <param name="repo">The GitHub repo that reports are filed in, as <c>owner/name</c>.</param>
-    public static void Start(string appName, string repo)
+    public static void Start(string appName, string repo) => Start(appName, repo, null);
+
+    /// <inheritdoc cref="Start(string, string)"/>
+    /// <param name="strings">The window's text in the app's language. Each string left out stays English.</param>
+    public static void Start(string appName, string repo, CrashReportStrings? strings)
     {
         // A second handler would record each crash twice.
         if (_started is not null)
@@ -48,7 +52,7 @@ public static partial class CrashReports
                 Read(() => Environment.UserName),
                 Read(() => Environment.MachineName),
                 Read(() => Environment.UserDomainName)));
-        _started = (folder, appName, repo);
+        _started = (folder, appName, repo, strings);
 
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
@@ -70,12 +74,12 @@ public static partial class CrashReports
             throw new InvalidOperationException("CrashReports.Start hasn't been called. Call it first thing in Main, before showing reports.");
         }
 
-        return TakeUnshown(started.Folder, started.App, started.Repo);
+        return TakeUnshown(started.Folder, started.App, started.Repo, started.Strings);
     }
 
     // Report names sort by time, so the newest is the last name and "shown" only remembers one name. A report older than
     // the last one shown is never shown: the newer crash already told the user.
-    internal static CrashReport? TakeUnshown(string folder, string app, string repo)
+    internal static CrashReport? TakeUnshown(string folder, string app, string repo, CrashReportStrings? strings = null)
     {
         try
         {
@@ -88,7 +92,7 @@ public static partial class CrashReports
 
             var text = File.ReadAllText(Path.Combine(folder, newest)).ReplaceLineEndings("\n");
             File.WriteAllText(shown, newest);
-            return string.IsNullOrWhiteSpace(text) ? null : new CrashReport(app, repo, text);
+            return string.IsNullOrWhiteSpace(text) ? null : new CrashReport(app, repo, text, strings);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {

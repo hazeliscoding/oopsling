@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input.Platform;
@@ -24,8 +25,19 @@ public sealed class CrashReportWindowTests
     {
         var window = Open(ShortReport);
 
-        Assert.Equal("Sample closed because of an error.", Texts(window)[0]);
+        Assert.Equal("Sample closed because of an error", window.Title);
+        Assert.Equal(
+            [
+                "Sample closed because of an error.",
+                "This is the report it made, and nothing has been sent. Report on GitHub opens it as a new issue in your "
+                    + "browser, where you can read and edit it before you submit it.",
+                "Report on GitHub",
+                "Copy",
+                "Dismiss",
+            ],
+            Texts(window));
         Assert.Equal(ShortReport, Single<TextBox>(window).Text);
+        Assert.Equal("Crash report", AutomationProperties.GetName(Single<TextBox>(window)));
         Assert.Equal(["Report on GitHub", "Copy", "Dismiss"], window.GetVisualDescendants().OfType<Button>().Select(b => b.Content));
         Assert.NotNull(window.CaptureRenderedFrame());
     }, CancellationToken.None);
@@ -52,6 +64,33 @@ public sealed class CrashReportWindowTests
         Assert.Contains("The report is on the clipboard.", Texts(window));
 
         // Dispatch awaits an async lambda only when it returns a value; one returning a bare Task is never awaited.
+        return true;
+    }, CancellationToken.None);
+
+    [Fact]
+    public Task Shows_the_hosts_strings() => Session.Dispatch(() =>
+    {
+        var frames = string.Concat(Enumerable.Range(0, 400).Select(i => $"   at Sample.Deep.Frame{i}()\n"));
+
+        var window = Open($"Sample 1.0 crashed: InvalidOperationException\n\n```text\nboom\n{frames}```\n", strings: German);
+
+        Assert.Equal("Sample wurde wegen eines Fehlers beendet", window.Title);
+        Assert.Equal(
+            ["Sample wurde wegen eines Fehlers beendet.", German.Intro, German.TooLongForLink, "Auf GitHub melden", "Kopieren", "Schließen"],
+            Texts(window));
+        Assert.Equal("Absturzbericht", AutomationProperties.GetName(Single<TextBox>(window)));
+    }, CancellationToken.None);
+
+    [Fact]
+    public Task Says_in_the_hosts_words_that_Copy_worked() => Session.Dispatch(async () =>
+    {
+        var window = Open(ShortReport, strings: German);
+
+        window.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "Kopieren")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(ShortReport, await window.Clipboard!.TryGetTextAsync());
+        Assert.Contains("Der Bericht ist in der Zwischenablage.", Texts(window));
         return true;
     }, CancellationToken.None);
 
@@ -83,9 +122,21 @@ public sealed class CrashReportWindowTests
         Assert.Equal(1, takes);
     }, CancellationToken.None);
 
-    private static CrashReportWindow Open(string text)
+    private static readonly CrashReportStrings German = new()
     {
-        var window = new CrashReportWindow(new CrashReport("Sample", "hazeliscoding/staypaw", text));
+        Closed = "Sample wurde wegen eines Fehlers beendet.",
+        Intro = "Das ist der Bericht dazu, und nichts wurde gesendet.",
+        TooLongForLink = "Der Bericht ist zu lang für einen Link.",
+        ReportOnGitHub = "Auf GitHub melden",
+        Copy = "Kopieren",
+        Dismiss = "Schließen",
+        ReportName = "Absturzbericht",
+        Copied = "Der Bericht ist in der Zwischenablage.",
+    };
+
+    private static CrashReportWindow Open(string text, CrashReportStrings? strings = null)
+    {
+        var window = new CrashReportWindow(new CrashReport("Sample", "hazeliscoding/staypaw", text, strings: strings));
         window.Show();
         Dispatcher.UIThread.RunJobs();
         return window;

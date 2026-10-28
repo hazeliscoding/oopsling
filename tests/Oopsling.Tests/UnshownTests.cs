@@ -45,6 +45,15 @@ public sealed class UnshownTests : IDisposable
         Assert.Null(Take());
     }
 
+    [Fact]
+    public void The_report_carries_the_hosts_strings()
+    {
+        Write("crash-20261026T010000000Z.md", "Sample 1.0 crashed: First");
+        var strings = new CrashReportStrings { Copy = "Kopieren" };
+
+        Assert.Equal("Kopieren", CrashReports.TakeUnshown(_folder, "Sample", "hazeliscoding/staypaw", strings: strings)?.Strings.Copy);
+    }
+
     private CrashReport? Take() => CrashReports.TakeUnshown(_folder, "Sample", "hazeliscoding/staypaw");
 
     private void Write(string name, string title)

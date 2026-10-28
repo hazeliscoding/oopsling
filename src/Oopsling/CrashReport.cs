@@ -10,12 +10,11 @@ public sealed class CrashReport
     // with a 500. Signed in, a link works up to 8,209. Measured on 2026-10-26; see ROADMAP.md.
     internal const int MaxLinkLength = 6000;
 
-    private const string CutNote = "This report was too long for a link, so the end of its stack is missing here. "
-        + "The whole report is on your clipboard: select all of this text and paste it in its place.";
-
-    internal CrashReport(string app, string repo, string text)
+    internal CrashReport(string app, string repo, string text, CrashReportStrings? strings = null)
     {
         AppName = app;
+        strings ??= new();
+        Strings = strings.Closed is null ? strings with { Closed = $"{app} closed because of an error." } : strings;
         Text = text;
         var split = text.IndexOf("\n\n", StringComparison.Ordinal);
         Title = split < 0 ? text.TrimEnd('\n') : text[..split];
@@ -24,12 +23,15 @@ public sealed class CrashReport
         FitsInLink = IssueLink.Length <= MaxLinkLength;
         if (!FitsInLink)
         {
-            IssueLink = Link(repo, Title, Cut(repo, Title, body));
+            IssueLink = Link(repo, Title, Cut(repo, Title, body, Strings.CutNote));
         }
     }
 
-    /// <summary>The app's name, as passed to <see cref="CrashReports.Start"/>.</summary>
+    /// <summary>The app's name, as passed to <see cref="CrashReports.Start(string, string)"/>.</summary>
     public string AppName { get; }
+
+    /// <summary>The window's text, as passed to <see cref="CrashReports.Start(string, string, CrashReportStrings)"/>, with English for each string left out.</summary>
+    public CrashReportStrings Strings { get; }
 
     /// <summary>The issue's title: the report's first line.</summary>
     public string Title { get; }
@@ -57,7 +59,7 @@ public sealed class CrashReport
 
     // Keeps the frames nearest the throw and the details after the stack, and drops the frames furthest from it.
     // Escaping works character by character, so each kept line costs exactly its own escaped length.
-    private static string Cut(string repo, string title, string body)
+    private static string Cut(string repo, string title, string body, string note)
     {
         var lines = body.Split('\n');
 
@@ -65,8 +67,8 @@ public sealed class CrashReport
         var close = Array.FindLastIndex(lines, line => line.Length >= 3 && line.All(c => c == '`'));
         var stack = close < 0 ? lines : lines[..close];
         var tail = "   ...\n" + (close < 0 ? "" : string.Join('\n', lines[close..]));
-        var budget = MaxLinkLength - Link(repo, title, CutNote + "\n\n" + tail).Length;
-        var kept = new StringBuilder(CutNote + "\n\n");
+        var budget = MaxLinkLength - Link(repo, title, note + "\n\n" + tail).Length;
+        var kept = new StringBuilder(note + "\n\n");
         foreach (var line in stack)
         {
             var cost = Uri.EscapeDataString(line + "\n").Length;

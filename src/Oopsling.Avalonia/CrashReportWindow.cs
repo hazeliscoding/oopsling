@@ -19,16 +19,19 @@ public sealed class CrashReportWindow : Window
     internal CrashReportWindow(CrashReport report)
     {
         _report = report;
-        Title = $"{report.AppName} closed because of an error";
+        var strings = report.Strings;
+        // CrashReport fills in the English heading when the host left it out.
+        var closed = strings.Closed!;
+        Title = closed.TrimEnd('.');
         Width = 760;
         Height = 560;
         MinWidth = 420;
         MinHeight = 320;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
-        var reportOnGitHub = new Button { Content = "Report on GitHub", Classes = { "accent" } };
-        var copy = new Button { Content = "Copy" };
-        var dismiss = new Button { Content = "Dismiss", IsCancel = true };
+        var reportOnGitHub = new Button { Content = strings.ReportOnGitHub, Classes = { "accent" } };
+        var copy = new Button { Content = strings.Copy };
+        var dismiss = new Button { Content = strings.Dismiss, IsCancel = true };
         reportOnGitHub.Click += ReportOnGitHub;
         copy.Click += Copy;
         dismiss.Click += (_, _) => Close();
@@ -41,7 +44,7 @@ public sealed class CrashReportWindow : Window
             TextWrapping = TextWrapping.NoWrap,
             FontFamily = new FontFamily("Cascadia Mono, Consolas, Menlo, DejaVu Sans Mono, monospace"),
         };
-        AutomationProperties.SetName(text, "Crash report");
+        AutomationProperties.SetName(text, strings.ReportName);
         ScrollViewer.SetHorizontalScrollBarVisibility(text, ScrollBarVisibility.Auto);
 
         var intro = new StackPanel
@@ -50,23 +53,14 @@ public sealed class CrashReportWindow : Window
             Margin = new(0, 0, 0, 12),
             Children =
             {
-                new TextBlock { Text = $"{report.AppName} closed because of an error.", FontSize = 18, FontWeight = FontWeight.SemiBold },
-                new TextBlock
-                {
-                    Text = "This is the report it made, and nothing has been sent. Report on GitHub opens it as a new issue "
-                        + "in your browser, where you can read and edit it before you submit it.",
-                    TextWrapping = TextWrapping.Wrap,
-                },
+                // Wraps too, since a host's language can make it longer than the narrowest window.
+                new TextBlock { Text = closed, FontSize = 18, FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap },
+                new TextBlock { Text = strings.Intro, TextWrapping = TextWrapping.Wrap },
             },
         };
         if (!report.FitsInLink)
         {
-            intro.Children.Add(new TextBlock
-            {
-                Text = "The report is too long for a link, so Report on GitHub also copies it. Paste it into the issue in "
-                    + "place of the text there.",
-                TextWrapping = TextWrapping.Wrap,
-            });
+            intro.Children.Add(new TextBlock { Text = strings.TooLongForLink, TextWrapping = TextWrapping.Wrap });
         }
 
         intro.Children.Add(_status);
@@ -143,7 +137,7 @@ public sealed class CrashReportWindow : Window
             catch (Exception)
             {
                 // The link holds only part of a long report, and the user would paste whatever the clipboard held before.
-                Say("The report couldn't be copied, so GitHub wasn't opened. Select the report above and copy it from there.");
+                Say(_report.Strings.CopyFailedBeforeGitHub);
                 return;
             }
         }
@@ -155,7 +149,7 @@ public sealed class CrashReportWindow : Window
         catch (Exception)
         {
             // The host is just starting: a missing browser mustn't take it down.
-            Say("No browser opened. Copy the report and file it on GitHub yourself.");
+            Say(_report.Strings.NoBrowser);
         }
     }
 
@@ -164,11 +158,11 @@ public sealed class CrashReportWindow : Window
         try
         {
             await SetClipboard();
-            Say("The report is on the clipboard.");
+            Say(_report.Strings.Copied);
         }
         catch (Exception)
         {
-            Say("The report couldn't be copied. Select it above and copy it from there.");
+            Say(_report.Strings.CopyFailed);
         }
     }
 

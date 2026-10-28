@@ -40,7 +40,8 @@ public class CrashReportTests
         Assert.False(report.FitsInLink);
         Assert.InRange(report.IssueLink.Length, CrashReport.MaxLinkLength - 200, CrashReport.MaxLinkLength);
         var body = Parameters(report.IssueLink)["body"];
-        Assert.Contains("clipboard", body);
+        Assert.StartsWith("This report was too long for a link, so the end of its stack is missing here. The whole report is "
+            + "on your clipboard: select all of this text and paste it in its place.\n\n", body);
         Assert.Contains("LongException: boom\n   at Sample.Deep.Frame0(", body);
         Assert.DoesNotContain("Frame399(", body);
         Assert.EndsWith("   ...\n```\n\n- App: Sample 1.0\n- OS: Made-up OS 1\n", body);
@@ -58,6 +59,28 @@ public class CrashReportTests
         var body = Parameters(report.IssueLink)["body"];
         Assert.Contains("LongException: ``` xxxxxxxxxx", body);
         Assert.EndsWith("x\n   ...\n````\n\n- App: Sample 1.0\n", body);
+    }
+
+    [Fact]
+    public void A_cut_report_starts_with_the_hosts_note()
+    {
+        var frames = string.Concat(Enumerable.Range(0, 400).Select(i => $"\n   at Sample.Deep.Frame{i}(Object, EventArgs)"));
+        var text = Report.Format(new LongException("boom", frames), "Sample 1.0", "- App: Sample 1.0", Mask);
+
+        var report = new CrashReport("Sample", "hazeliscoding/staypaw", text, strings: new() { CutNote = "Der Bericht war zu lang." });
+
+        Assert.InRange(report.IssueLink.Length, CrashReport.MaxLinkLength - 200, CrashReport.MaxLinkLength);
+        Assert.StartsWith("Der Bericht war zu lang.\n\n```text\n", Parameters(report.IssueLink)["body"]);
+    }
+
+    [Fact]
+    public void The_heading_names_the_app_in_English_unless_the_host_writes_its_own()
+    {
+        const string text = "Sample 1.0 crashed: InvalidOperationException\n\n```text\nboom\n```\n";
+
+        Assert.Equal("Sample closed because of an error.", new CrashReport("Sample", "hazeliscoding/staypaw", text).Strings.Closed);
+        Assert.Equal("Sample closed because of an error.", new CrashReport("Sample", "hazeliscoding/staypaw", text, strings: new() { Copy = "Kopieren" }).Strings.Closed);
+        Assert.Equal("Sample ist abgestürzt.", new CrashReport("Sample", "hazeliscoding/staypaw", text, strings: new() { Closed = "Sample ist abgestürzt." }).Strings.Closed);
     }
 
     private static Dictionary<string, string> Parameters(string link) =>
