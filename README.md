@@ -47,9 +47,11 @@ System.IO.FileNotFoundException: Could not find file '<home>/.config/oopsling-sa
 - Before it writes, it masks the home folder, the user name wherever it appears, and anything that looks like a token.
 - At the next launch, a small Avalonia window shows the report, with Report on GitHub, Copy and Dismiss.
 - Report on GitHub opens your repo's new-issue page with the title and report filled in. When a report is too long for a link, the link carries the top of the stack, and the whole report goes on the clipboard to paste in.
+- For users without a GitHub account, you can give a contact, an email address or a link. The window shows it under its buttons, and clicking it copies the report and opens a mail draft or the page.
+- The window speaks your app's language when you give it the text. It's English otherwise.
 - It works on Windows, macOS and Linux, with NativeAOT, and costs one handler and one folder check at startup.
 
-**The promise:** Oopsling never sends anything. A report leaves the PC only when the user reads it in their own browser and presses Submit.
+**The promise:** Oopsling never sends anything. A report leaves the PC only when the user reads it in their own browser and presses Submit, or sends it to your contact themselves.
 
 ```mermaid
 flowchart LR
@@ -102,6 +104,25 @@ That's all. The report is read once the main window is open, so a launch costs o
 - **Without Avalonia,** add `Oopsling` instead. At the next launch, `CrashReports.TakeUnshown()` returns the report the user hasn't seen, if there is one, with its `Text` to show and `OpenIssue()` to open the filled-in issue.
 - **Reports** are Markdown files in a `crashes` folder under the app's name in local app data: `%LOCALAPPDATA%` on Windows, `~/Library/Application Support` on macOS and `~/.local/share` on Linux. The newest 10 are kept.
 - **Issue templates:** if your repo has them, keep blank issues enabled. The link opens a blank issue with the report filled in, and with blank issues off, GitHub may show users the template picker instead.
+
+### A contact, and your app's language
+
+Since 1.1, `Start` also takes a contact for users without a GitHub account, an email address or an `https://` link, and the window's text. Write each string as a whole sentence with your app's name in it, since Oopsling fills nothing in. Each string you leave out stays English:
+
+```csharp
+CrashReports.Start("My App", "owner/my-app",
+    contact: "crashes@my-app.example",
+    strings: new CrashReportStrings
+    {
+        Closed = "My App wurde wegen eines Fehlers beendet.",
+        ReportOnGitHub = "Auf GitHub melden",
+        Copy = "Kopieren",
+        Dismiss = "Schließen",
+        Contact = "Kein GitHub-Konto? Schick den Bericht an",
+    });
+```
+
+The contact goes after the `Contact` sentence, as a link. An email address opens a draft with the report's title as its subject, and the report goes on the clipboard to paste in. [The sample](samples/Oopsling.Sample/Program.cs) has every string in German.
 
 ## Status
 

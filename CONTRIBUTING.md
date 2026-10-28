@@ -16,7 +16,7 @@ dotnet test --solution Oopsling.slnx
 dotnet format Oopsling.slnx
 ```
 
-`samples/Oopsling.Sample` is a small Avalonia app with a Crash button. Run it, crash it, and start it again to see the window. Start it with `--repo <owner>/<name>` to open the issue link for a repo of your own.
+`samples/Oopsling.Sample` is a small Avalonia app with a Crash button. Run it, crash it, and start it again to see the window. Start it with `--repo <owner>/<name>` to open the issue link for a repo of your own, `--contact <address>` to show a contact under the buttons, and `--lang de` to see the window in German.
 
 ## The rules
 

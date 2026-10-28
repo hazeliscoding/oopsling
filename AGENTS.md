@@ -32,6 +32,7 @@ One meaning per term. Code, docs, UI copy and agents use these words and no syno
 - **Mask:** replace personal text with a placeholder before anything is written, such as the home folder, the user name or a token.
 - **Issue link:** the host repo's GitHub new-issue URL with a report's title and body filled in.
 - **Shown:** a report the window has displayed once. It isn't shown again.
+- **Contact:** where a user without a GitHub account sends a report, an email address or an https link that the host gives. It's under the window's buttons.
 
 ## Dependencies
 
