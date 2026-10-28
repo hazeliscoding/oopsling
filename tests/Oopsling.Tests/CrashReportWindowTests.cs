@@ -116,16 +116,19 @@ public sealed class CrashReportWindowTests
     [Fact]
     public Task The_contact_copies_the_report_and_opens() => Session.Dispatch(async () =>
     {
-        var opened = new List<CrashReport>();
-        var window = Open(ShortReport, contact: "crashes@example.com", openContact: opened.Add);
+        // What the clipboard held when the contact opened, since the draft opens empty for the user to paste into.
+        var opened = new List<(CrashReport Report, Task<string?> Clipboard)>();
+        CrashReportWindow window = null!;
+        window = Open(ShortReport, contact: "crashes@example.com", openContact: report => opened.Add((report, window.Clipboard!.TryGetTextAsync())));
         // The clipboard outlives each test, and others put this same report on it.
         await window.Clipboard!.ClearAsync();
 
         Single<HyperlinkButton>(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(ShortReport, await window.Clipboard!.TryGetTextAsync());
-        Assert.Equal("crashes@example.com", Assert.Single(opened).Contact);
+        var (report, clipboard) = Assert.Single(opened);
+        Assert.Equal("crashes@example.com", report.Contact);
+        Assert.Equal(ShortReport, await clipboard);
         Assert.Contains("The report is on the clipboard. Paste it into your message.", Texts(window));
         return true;
     }, CancellationToken.None);

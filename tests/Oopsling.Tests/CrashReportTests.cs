@@ -84,6 +84,33 @@ public class CrashReportTests
         Assert.Equal("Sample closed because of an error.", new CrashReport("Sample", "hazeliscoding/staypaw", text, strings: new() { Closed = " " }).Strings.Closed);
     }
 
+    // 1.0 showed these, and Start(appName, repo) still does.
+    [Fact]
+    public void The_English_strings_are_1_0s_word_for_word()
+    {
+        var strings = new CrashReportStrings();
+
+        Assert.Equal(
+            "This is the report it made, and nothing has been sent. Report on GitHub opens it as a new issue in your browser, "
+                + "where you can read and edit it before you submit it.",
+            strings.Intro);
+        Assert.Equal(
+            "The report is too long for a link, so Report on GitHub also copies it. Paste it into the issue in place of the "
+                + "text there.",
+            strings.TooLongForLink);
+        Assert.Equal(["Report on GitHub", "Copy", "Dismiss", "Crash report"], [strings.ReportOnGitHub, strings.Copy, strings.Dismiss, strings.ReportName]);
+        Assert.Equal("The report is on the clipboard.", strings.Copied);
+        Assert.Equal("The report couldn't be copied. Select it above and copy it from there.", strings.CopyFailed);
+        Assert.Equal(
+            "The report couldn't be copied, so GitHub wasn't opened. Select the report above and copy it from there.",
+            strings.CopyFailedBeforeGitHub);
+        Assert.Equal("No browser opened. Copy the report and file it on GitHub yourself.", strings.NoBrowser);
+        Assert.Equal(
+            "This report was too long for a link, so the end of its stack is missing here. The whole report is on your "
+                + "clipboard: select all of this text and paste it in its place.",
+            strings.CutNote);
+    }
+
     [Fact]
     public void An_email_contact_opens_a_draft_with_the_title_as_its_subject()
     {
