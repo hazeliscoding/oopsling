@@ -16,7 +16,7 @@ public partial class App : Application
             var window = new MainWindow();
             desktop.MainWindow = window;
             CrashReportWindow.ShowUnshown(window);
-            if (desktop.Args is ["--crash", var thread])
+            if (Program.Option(desktop.Args ?? [], "--crash") is { } thread)
             {
                 window.PressOnceOpened(backgroundThread: thread == "background");
             }
