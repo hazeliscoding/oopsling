@@ -86,6 +86,13 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 - **The next milestones,** in this order, the owner's picks from Later: a contact line for users without a GitHub account, and the window's text in any language (1.1); Sweepling as the second host; native crashes on Windows (1.2). The order puts the small additions first, since Staypaw's users include gamers without GitHub accounts, and the large one last. It gives up starting on native crashes, which Staypaw may hit, until after Sweepling.
 - **.NET 10 only stays.** .NET 8 and 9 both reach the end of their support in November 2026, so targeting them would serve hosts for a few weeks. This gives up hosts that can't move to .NET 10, such as CyberRadio Assistant on .NET 8.
 
+## Decisions in M5 (2026-10-27)
+
+- **Clicking the contact copies the report, then opens it,** the owner's pick: a mail draft to an email address with the report's title as its subject, or the link's page. A `mailto:` link can't carry a long report, so the draft is empty and the user pastes. If the copy fails nothing opens, as with long reports, and if nothing can open it, the window says the report is on the clipboard. This gives up a draft with the report already in it.
+- **A contact is an email address or an `https://` link, and `Start` throws for anything else.** The OS shell opens it, so a `file:` path or a script would run, and a mistake should show on the first run rather than at a user's crash. The address can't hold `?`, `&`, `,` or `;`, which would add a header or a recipient to the draft. This gives up `http://` links and app links such as `discord://`.
+- **Hosts write the window's text as whole sentences,** the owner's pick, with their app's name in them, in one `CrashReportStrings` record where each string left out stays English. The host already knows its name and contact, so there's no placeholder syntax to learn or check. The contact link follows the contact sentence, so a language that would put it mid-sentence ends the sentence with a colon instead. It's `CrashReportStrings`, not `CrashReportText`, since a report's `Text` is the report itself.
+- **The contact and the strings come in a second `Start` overload.** Package validation now compares each pack with 1.0.0, and turning `Start(appName, repo)` into one method with optional parameters fails it with CP0002, since hosts built against 1.0 call the two-argument method. This gives up a single `Start`.
+
 ## Shipped
 
 | Version | Released | What it brought |
@@ -103,11 +110,17 @@ Everything else in M4 shipped as 1.0.0.
 
 ## M5: 1.1, reports without GitHub, and the window in any language
 
-- [ ] A `Start` overload takes a contact, an email address or a link, and the window shows "No GitHub account? Copy the report and send it to …" under its buttons. Existing `Start(appName, repo)` calls don't change. Decide here whether the contact opens anything: a `mailto:` link can't carry a long report, so Copy stays the way to send it.
-- [ ] A host can give the window its own text for every string it shows, in any language, with English as the default. The note at the top of a cut report, which reaches the issue, takes the host's text too. Oopsling ships no translations of its own.
+- [x] A `Start` overload takes a contact, an email address or a link, and the window shows "No GitHub account? Send the report to …" under its buttons. Existing `Start(appName, repo)` calls don't change. Clicking the contact copies the report, then opens it (see the decisions above).
+- [x] A host can give the window its own text for every string it shows, in any language, with English as the default. The note at the top of a cut report, which reaches the issue, takes the host's text too. Oopsling ships no translations of its own.
 - [ ] Staypaw takes 1.1 with a contact the owner picks.
 
 **Done when:** the sample shows the contact line and a German window from host-given text; a test proves `Start(appName, repo)` behaves as in 1.0; and the fresh-install check passes against 1.1.0 on each OS.
+
+**Checked on 2026-10-27,** before the release:
+
+- The sample's Release build, crashed with `--crash ui` and started again with `--contact crashes@example.com --lang de`, showed the window in German with the contact line under its buttons. Headless tests render it in English and German, at full and narrowest width.
+- Tests pin 1.0's English text in the window and in a cut report's note word for word, and the window without a contact shows exactly 1.0's text. Package validation against 1.0.0 passes, and failed with CP0002 when `Start(appName, repo)` was given an optional contact instead.
+- Positive controls: accepting `http://`, spaces or `?` in a contact each fails a test, and so does a contact click that doesn't copy the report.
 
 ## M6: Sweepling, the second host
 
