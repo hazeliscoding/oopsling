@@ -89,7 +89,7 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 ## Decisions in M5 (2026-10-27)
 
 - **Clicking the contact copies the report, then opens it,** the owner's pick: a mail draft to an email address with the report's title as its subject, or the link's page. A `mailto:` link can't carry a long report, so the draft is empty and the user pastes. If the copy fails nothing opens, as with long reports, and if nothing can open it, the window says the report is on the clipboard. This gives up a draft with the report already in it.
-- **A contact is an email address or an `https://` link, and `Start` throws for anything else.** The OS shell opens it, so a `file:` path or a script would run, and a mistake should show on the first run rather than at a user's crash. The address can't hold `?`, `&`, `,` or `;`, which would add a header or a recipient to the draft. This gives up `http://` links and app links such as `discord://`.
+- **A contact is an email address or an `https://` link, and `Start` throws for anything else.** The OS shell opens it, so a `file:` path or a script would run, and a mistake should show on the first run rather than at a user's crash. An address holds only ASCII letters, digits and `. _ + -` before a dotted domain, so nothing can add a header or a recipient to the draft, or hide in the window as a right-to-left override would. This gives up `http://` links, app links such as `discord://`, and addresses with other characters or a non-ASCII domain.
 - **Hosts write the window's text as whole sentences,** the owner's pick, with their app's name in them, in one `CrashReportStrings` record where each string left out stays English. The host already knows its name and contact, so there's no placeholder syntax to learn or check. The contact link follows the contact sentence, so a language that would put it mid-sentence ends the sentence with a colon instead. It's `CrashReportStrings`, not `CrashReportText`, since a report's `Text` is the report itself.
 - **The contact and the strings come in a second `Start` overload.** Package validation now compares each pack with 1.0.0, and turning `Start(appName, repo)` into one method with optional parameters fails it with CP0002, since hosts built against 1.0 call the two-argument method. This gives up a single `Start`.
 
@@ -118,9 +118,10 @@ Everything else in M4 shipped as 1.0.0.
 
 **Checked on 2026-10-27,** before the release:
 
-- The sample's Release build, crashed with `--crash ui` and started again with `--contact crashes@example.com --lang de`, showed the window in German with the contact line under its buttons. Headless tests render it in English and German, at full and narrowest width.
-- Tests pin 1.0's English text in the window and in a cut report's note word for word, and the window without a contact shows exactly 1.0's text. Package validation against 1.0.0 passes, and failed with CP0002 when `Start(appName, repo)` was given an optional contact instead.
-- Positive controls: accepting `http://`, spaces or `?` in a contact each fails a test, and so does a contact click that doesn't copy the report.
+- The sample's Release build, crashed with `--crash ui` and started again with `--contact crashes@example.com --lang de`, showed the window in German with the contact line under its buttons. That run is also the only check that `Start` passes the contact and strings on: a test can't call `Start` without hooking the test host's own crashes. A throwaway headless render, not kept, showed the German heading and contact line wrapping at the narrowest width.
+- `Start(appName, repo)` behaves as in 1.0: tests pin every English string 1.0 showed, word for word, and the window without a contact or strings shows exactly 1.0's text. Package validation against 1.0.0 passes, and failed with CP0002 when `Start(appName, repo)` was given an optional contact instead.
+- Positive controls: accepting `http://`, spaces or `?` in a contact each fails a test, and so do a contact click that doesn't copy the report and one that opens before it copies. The branch where the copy fails isn't tested, since the headless clipboard can't be made to fail.
+- A review agent read the change. Its fixes: a blank heading falls back to English, the contact sentence wraps, addresses are an allow-list, and the README example says to give every string.
 
 ## M6: Sweepling, the second host
 
