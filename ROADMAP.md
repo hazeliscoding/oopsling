@@ -82,7 +82,7 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 ## Decisions after 1.0 (2026-10-27)
 
 - **Open work stays in this file,** the owner's call, not in GitHub issues, milestones or a Project board. Work goes from the next unchecked item, as before. This gives up a public board that contributors could follow.
-- **The finished milestones are folded into Shipped.** M0 to M4's checklists, with the evidence for each "Done when", are in `git show v1.0.0:ROADMAP.md`. M4's notes from after the tag (the 1.0.0 publish, the fresh-install check against it, and Staypaw taking it) are in `git show 80f299f:ROADMAP.md`. Oopsling commits straight to `main`, so that hash stays.
+- **The finished milestones are folded into Shipped.** M0 to M4's checklists, with the evidence for each "Done when", are in `git show v1.0.0:ROADMAP.md`. M4's notes from after the tag (the 1.0.0 publish, the fresh-install check against it, and Staypaw taking it) are in `git show 80f299f:ROADMAP.md`. M5's checklist and evidence are in `git show 943d075:ROADMAP.md`. Oopsling commits straight to `main`, so those hashes stay.
 - **The next milestones,** in this order, the owner's picks from Later: a contact line for users without a GitHub account, and the window's text in any language (1.1); Sweepling as the second host; native crashes on Windows (1.2). The order puts the small additions first, since Staypaw's users include gamers without GitHub accounts, and the large one last. It gives up starting on native crashes, which Staypaw may hit, until after Sweepling.
 - **.NET 10 only stays.** .NET 8 and 9 both reach the end of their support in November 2026, so targeting them would serve hosts for a few weeks. This gives up hosts that can't move to .NET 10, such as CyberRadio Assistant on .NET 8.
 
@@ -99,32 +99,15 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 |---|---|---|
 | [0.1.0-preview.1](https://www.nuget.org/packages/Oopsling.Avalonia/0.1.0-preview.1) | 2026-10-27 | M0 to M3: the masked report written while dying, the window that shows it once, the filled-in issue link, the release workflow, and Staypaw as the first host. |
 | [1.0.0](https://github.com/hazeliscoding/oopsling/releases/tag/v1.0.0) | 2026-10-27 | M4: install steps, a quick start and a demo in the README, the fresh-install check on each OS, `SECURITY.md` and `CONTRIBUTING.md`, and error messages that name what they refused. |
-| [1.1.0](https://github.com/hazeliscoding/oopsling/releases/tag/v1.1.0) | 2026-10-27 | M5's code: a contact for users without a GitHub account, the window's text in the host's language, and each pack checked against 1.0.0's API. |
+| [1.1.0](https://github.com/hazeliscoding/oopsling/releases/tag/v1.1.0) | 2026-10-27 | M5: a contact for users without a GitHub account, the window's text in the host's language, and each pack checked against 1.0.0's API. |
 
 ## M4: 1.0, finishing
 
 Everything else in M4 shipped as 1.0.0.
 
-- [ ] A Staypaw release with Oopsling in it has shipped. Staypaw's `main` takes 1.0.0 for v1.2; when it ships is the owner's call.
+- [ ] A Staypaw release with Oopsling in it has shipped. Staypaw's `main` takes 1.1.0 for v1.2.1; when it ships is the owner's call.
 
 **Done when:** that Staypaw release is out.
-
-## M5: 1.1, reports without GitHub, and the window in any language
-
-- [x] A `Start` overload takes a contact, an email address or a link, and the window shows "No GitHub account? Send the report to …" under its buttons. Existing `Start(appName, repo)` calls don't change. Clicking the contact copies the report, then opens it (see the decisions above).
-- [x] A host can give the window its own text for every string it shows, in any language, with English as the default. The note at the top of a cut report, which reaches the issue, takes the host's text too. Oopsling ships no translations of its own.
-- [x] Staypaw takes 1.1 with a contact the owner picks.
-
-**Done when:** the sample shows the contact line and a German window from host-given text; a test proves `Start(appName, repo)` behaves as in 1.0; and the fresh-install check passes against 1.1.0 on each OS.
-
-**Checked on 2026-10-27,** before the release:
-
-- The sample's Release build, crashed with `--crash ui` and started again with `--contact crashes@example.com --lang de`, showed the window in German with the contact line under its buttons. That run is also the only check that `Start` passes the contact and strings on: a test can't call `Start` without hooking the test host's own crashes. A throwaway headless render, not kept, showed the German heading and contact line wrapping at the narrowest width.
-- `Start(appName, repo)` behaves as in 1.0: tests pin every English string 1.0 showed, word for word, and the window without a contact or strings shows exactly 1.0's text. Package validation against 1.0.0 passes, and failed with CP0002 when `Start(appName, repo)` was given an optional contact instead.
-- Positive controls: accepting `http://`, spaces or `?` in a contact each fails a test, and so do a contact click that doesn't copy the report and one that opens before it copies. The branch where the copy fails isn't tested, since the headless clipboard can't be made to fail.
-- A review agent read the change. Its fixes: a blank heading falls back to English, the contact sentence wraps, addresses are an allow-list, and the README example says to give every string.
-- 1.1.0 is on nuget.org, and the fresh-install check passed against it on Windows, macOS and Linux: [run 40627254210](https://github.com/hazeliscoding/oopsling/actions/runs/40627254210).
-- Staypaw's `main` takes 1.1.0 (hazeliscoding/staypaw@2ce2a74) and passes `staypaw.crashes.happier582@passinbox.com`, an alias the owner made for it, as the contact (hazeliscoding/staypaw@87b4e39).
 
 ## M6: Sweepling, the second host
 
