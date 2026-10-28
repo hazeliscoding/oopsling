@@ -83,6 +83,35 @@ public class CrashReportTests
         Assert.Equal("Sample ist abgestürzt.", new CrashReport("Sample", "hazeliscoding/staypaw", text, strings: new() { Closed = "Sample ist abgestürzt." }).Strings.Closed);
     }
 
+    [Fact]
+    public void An_email_contact_opens_a_draft_with_the_title_as_its_subject()
+    {
+        var text = Report.Format(new InvalidOperationException("boom"), "Sample 1.0", "- App: Sample 1.0", Mask);
+
+        var report = new CrashReport("Sample", "hazeliscoding/staypaw", text, contact: "crashes@example.com");
+
+        Assert.Equal("crashes@example.com", report.Contact);
+        Assert.Equal("mailto:crashes@example.com?subject=Sample%201.0%20crashed%3A%20InvalidOperationException", report.ContactLink);
+    }
+
+    [Fact]
+    public void A_link_contact_opens_as_given()
+    {
+        var text = Report.Format(new InvalidOperationException("boom"), "Sample 1.0", "- App: Sample 1.0", Mask);
+
+        Assert.Equal("https://example.com/support", new CrashReport("Sample", "hazeliscoding/staypaw", text, contact: "https://example.com/support").ContactLink);
+    }
+
+    [Fact]
+    public void Without_a_contact_there_is_nothing_to_open()
+    {
+        var report = new CrashReport("Sample", "hazeliscoding/staypaw", Report.Format(new InvalidOperationException("boom"), "Sample 1.0", "- App: Sample 1.0", Mask));
+
+        Assert.Null(report.Contact);
+        Assert.Null(report.ContactLink);
+        Assert.Throws<InvalidOperationException>(report.OpenContact);
+    }
+
     private static Dictionary<string, string> Parameters(string link) =>
         link[(link.IndexOf('?') + 1)..].Split('&').Select(p => p.Split('=')).ToDictionary(p => p[0], p => Uri.UnescapeDataString(p[1]));
 

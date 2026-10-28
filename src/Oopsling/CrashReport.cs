@@ -10,7 +10,7 @@ public sealed class CrashReport
     // with a 500. Signed in, a link works up to 8,209. Measured on 2026-10-26; see ROADMAP.md.
     internal const int MaxLinkLength = 6000;
 
-    internal CrashReport(string app, string repo, string text, CrashReportStrings? strings = null)
+    internal CrashReport(string app, string repo, string text, string? contact = null, CrashReportStrings? strings = null)
     {
         AppName = app;
         strings ??= new();
@@ -19,6 +19,10 @@ public sealed class CrashReport
         var split = text.IndexOf("\n\n", StringComparison.Ordinal);
         Title = split < 0 ? text.TrimEnd('\n') : text[..split];
         var body = split < 0 ? "" : text[(split + 2)..];
+        Contact = contact;
+        ContactLink = contact is null || contact.StartsWith("https://", StringComparison.Ordinal)
+            ? contact
+            : $"mailto:{contact}?subject={Uri.EscapeDataString(Title)}";
         IssueLink = Link(repo, Title, body);
         FitsInLink = IssueLink.Length <= MaxLinkLength;
         if (!FitsInLink)
@@ -30,8 +34,21 @@ public sealed class CrashReport
     /// <summary>The app's name, as passed to <see cref="CrashReports.Start(string, string)"/>.</summary>
     public string AppName { get; }
 
-    /// <summary>The window's text, as passed to <see cref="CrashReports.Start(string, string, CrashReportStrings)"/>, with English for each string left out.</summary>
+    /// <summary>
+    /// The window's text, as passed to <see cref="CrashReports.Start(string, string, string, CrashReportStrings)"/>, with
+    /// English for each string left out.
+    /// </summary>
     public CrashReportStrings Strings { get; }
+
+    /// <summary>
+    /// Where a user without a GitHub account sends the report, an email address or an https link, or null when the host
+    /// gave none.
+    /// </summary>
+    public string? Contact { get; }
+
+    // A link, or a draft to an email address with the report's title as its subject. The draft stays empty: a mailto link
+    // can't carry a long report, so the user pastes it.
+    internal string? ContactLink { get; }
 
     /// <summary>The issue's title: the report's first line.</summary>
     public string Title { get; }
@@ -53,6 +70,14 @@ public sealed class CrashReport
     /// Throws when the OS has no way to open a link, as on a machine without a browser.
     /// </summary>
     public void OpenIssue() => Process.Start(new ProcessStartInfo(IssueLink) { UseShellExecute = true })?.Dispose();
+
+    /// <summary>
+    /// Opens <see cref="Contact"/> through the OS shell: a draft in the user's mail app, or the link in their browser.
+    /// Nothing is sent until they send it. Put <see cref="Text"/> on the clipboard first, since the draft is empty. Throws
+    /// when there's no contact, or when the OS has no way to open it.
+    /// </summary>
+    public void OpenContact() =>
+        Process.Start(new ProcessStartInfo(ContactLink ?? throw new InvalidOperationException("The host gave no contact.")) { UseShellExecute = true })?.Dispose();
 
     private static string Link(string repo, string title, string body) =>
         $"https://github.com/{repo}/issues/new?title={Uri.EscapeDataString(title)}&body={Uri.EscapeDataString(body)}";

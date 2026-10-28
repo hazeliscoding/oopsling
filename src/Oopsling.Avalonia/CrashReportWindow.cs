@@ -9,16 +9,20 @@ using Avalonia.Media;
 namespace Oopsling.Avalonia;
 
 /// <summary>
-/// Shows the newest crash report at the next launch, with Report on GitHub, Copy and Dismiss, in the host's theme.
+/// Shows the newest crash report at the next launch, with Report on GitHub, Copy and Dismiss, in the host's theme. When
+/// the host gave a contact, it's under the buttons for users without a GitHub account.
 /// </summary>
 public sealed class CrashReportWindow : Window
 {
     private readonly CrashReport _report;
+    private readonly Action<CrashReport> _openContact;
     private readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap, IsVisible = false };
 
-    internal CrashReportWindow(CrashReport report)
+    // Tests pass openContact, so they open nothing through the shell.
+    internal CrashReportWindow(CrashReport report, Action<CrashReport>? openContact = null)
     {
         _report = report;
+        _openContact = openContact ?? (r => r.OpenContact());
         var strings = report.Strings;
         // CrashReport fills in the English heading when the host left it out.
         var closed = strings.Closed!;
@@ -70,12 +74,23 @@ public sealed class CrashReportWindow : Window
             Orientation = Orientation.Horizontal,
             HorizontalAlignment = HorizontalAlignment.Right,
             Spacing = 8,
-            Margin = new(0, 12, 0, 0),
             Children = { reportOnGitHub, copy, dismiss },
         };
+        var bottom = new StackPanel { Spacing = 8, Margin = new(0, 12, 0, 0), Children = { buttons } };
+        if (report.Contact is { } contact)
+        {
+            var link = new HyperlinkButton { Content = contact, Padding = new(0) };
+            link.Click += SendToContact;
+            bottom.Children.Add(new WrapPanel
+            {
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Children = { new TextBlock { Text = strings.Contact, Margin = new(0, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center }, link },
+            });
+        }
+
         DockPanel.SetDock(intro, Dock.Top);
-        DockPanel.SetDock(buttons, Dock.Bottom);
-        Content = new DockPanel { Margin = new(20), Children = { intro, buttons, text } };
+        DockPanel.SetDock(bottom, Dock.Bottom);
+        Content = new DockPanel { Margin = new(20), Children = { intro, bottom, text } };
     }
 
     /// <summary>
@@ -150,6 +165,31 @@ public sealed class CrashReportWindow : Window
         {
             // The host is just starting: a missing browser mustn't take it down.
             Say(_report.Strings.NoBrowser);
+        }
+    }
+
+    // The draft or page opens empty, so the report goes on the clipboard first, and nothing opens if it can't.
+    private async void SendToContact(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await SetClipboard();
+        }
+        catch (Exception)
+        {
+            Say(_report.Strings.CopyFailedBeforeContact);
+            return;
+        }
+
+        try
+        {
+            _openContact(_report);
+            Say(_report.Strings.CopiedForContact);
+        }
+        catch (Exception)
+        {
+            // A machine without a mail app mustn't take the host down.
+            Say(_report.Strings.NothingOpened);
         }
     }
 

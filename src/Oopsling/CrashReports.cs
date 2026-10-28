@@ -11,16 +11,20 @@ namespace Oopsling;
 /// </summary>
 public static partial class CrashReports
 {
-    private static (string Folder, string App, string Repo, CrashReportStrings? Strings)? _started;
+    private static (string Folder, string App, string Repo, string? Contact, CrashReportStrings? Strings)? _started;
 
     /// <summary>Starts recording crashes. Call it once, first thing in <c>Main</c>.</summary>
     /// <param name="appName">The app's name as users see it. Reports go in a <c>crashes</c> folder under it in local app data.</param>
     /// <param name="repo">The GitHub repo that reports are filed in, as <c>owner/name</c>.</param>
-    public static void Start(string appName, string repo) => Start(appName, repo, null);
+    public static void Start(string appName, string repo) => Start(appName, repo, null, null);
 
     /// <inheritdoc cref="Start(string, string)"/>
+    /// <param name="contact">
+    /// Where a user without a GitHub account sends a report: an email address, or an https link such as a support page.
+    /// The window shows it under its buttons.
+    /// </param>
     /// <param name="strings">The window's text in the app's language. Each string left out stays English.</param>
-    public static void Start(string appName, string repo, CrashReportStrings? strings)
+    public static void Start(string appName, string repo, string? contact = null, CrashReportStrings? strings = null)
     {
         // A second handler would record each crash twice.
         if (_started is not null)
@@ -40,6 +44,12 @@ public static partial class CrashReports
             throw new ArgumentException($"Expected the GitHub repo as owner/name, like hazeliscoding/staypaw, but got \"{repo}\".", nameof(repo));
         }
 
+        // The contact becomes a link the OS shell opens, so it can only be one that opens a mail draft or a web page.
+        if (contact is not null && !IsContact(contact))
+        {
+            throw new ArgumentException($"Expected the contact as an email address or an https link, like crashes@example.com, but got \"{contact}\".", nameof(contact));
+        }
+
         // Everything is worked out now, so a crash only formats and writes one file.
         var version = Version();
         var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), appName, "crashes");
@@ -52,7 +62,7 @@ public static partial class CrashReports
                 Read(() => Environment.UserName),
                 Read(() => Environment.MachineName),
                 Read(() => Environment.UserDomainName)));
-        _started = (folder, appName, repo, strings);
+        _started = (folder, appName, repo, contact, strings);
 
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
@@ -74,12 +84,12 @@ public static partial class CrashReports
             throw new InvalidOperationException("CrashReports.Start hasn't been called. Call it first thing in Main, before showing reports.");
         }
 
-        return TakeUnshown(started.Folder, started.App, started.Repo, started.Strings);
+        return TakeUnshown(started.Folder, started.App, started.Repo, started.Contact, started.Strings);
     }
 
     // Report names sort by time, so the newest is the last name and "shown" only remembers one name. A report older than
     // the last one shown is never shown: the newer crash already told the user.
-    internal static CrashReport? TakeUnshown(string folder, string app, string repo, CrashReportStrings? strings = null)
+    internal static CrashReport? TakeUnshown(string folder, string app, string repo, string? contact = null, CrashReportStrings? strings = null)
     {
         try
         {
@@ -92,7 +102,7 @@ public static partial class CrashReports
 
             var text = File.ReadAllText(Path.Combine(folder, newest)).ReplaceLineEndings("\n");
             File.WriteAllText(shown, newest);
-            return string.IsNullOrWhiteSpace(text) ? null : new CrashReport(app, repo, text, strings);
+            return string.IsNullOrWhiteSpace(text) ? null : new CrashReport(app, repo, text, contact, strings);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
@@ -103,9 +113,18 @@ public static partial class CrashReports
 
     internal static bool IsRepo(string? repo) => repo is not null && Repo().IsMatch(repo);
 
+    internal static bool IsContact(string contact) =>
+        Email().IsMatch(contact)
+        || (contact.StartsWith("https://", StringComparison.Ordinal) && !contact.Any(char.IsWhiteSpace) && Uri.TryCreate(contact, UriKind.Absolute, out _));
+
     // GitHub's owner names hold letters, digits and hyphens, and repo names also dots and underscores, but aren't . or ..
     [GeneratedRegex(@"\A[A-Za-z0-9-]+/(?!\.\.?\z)[A-Za-z0-9._-]+\z", RegexOptions.CultureInvariant)]
     private static partial Regex Repo();
+
+    // One address with a dotted domain. It leaves out what would end the address in a mailto link, or add a recipient or
+    // a header to it.
+    [GeneratedRegex(@"\A[^@\s?#%&:/,;<>""]+@[^@\s?#%&:/,;<>"".]+(?:\.[^@\s?#%&:/,;<>"".]+)+\z", RegexOptions.CultureInvariant)]
+    private static partial Regex Email();
 
     // Start runs first thing in Main, so a name the OS can't give, as when a domain controller is out of reach, goes
     // unmasked by name rather than stopping the app. The home folder is still masked.

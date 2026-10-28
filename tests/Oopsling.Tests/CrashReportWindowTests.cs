@@ -72,11 +72,20 @@ public sealed class CrashReportWindowTests
     {
         var frames = string.Concat(Enumerable.Range(0, 400).Select(i => $"   at Sample.Deep.Frame{i}()\n"));
 
-        var window = Open($"Sample 1.0 crashed: InvalidOperationException\n\n```text\nboom\n{frames}```\n", strings: German);
+        var window = Open($"Sample 1.0 crashed: InvalidOperationException\n\n```text\nboom\n{frames}```\n", German, "crashes@example.com");
 
         Assert.Equal("Sample wurde wegen eines Fehlers beendet", window.Title);
         Assert.Equal(
-            ["Sample wurde wegen eines Fehlers beendet.", German.Intro, German.TooLongForLink, "Auf GitHub melden", "Kopieren", "Schließen"],
+            [
+                "Sample wurde wegen eines Fehlers beendet.",
+                German.Intro,
+                German.TooLongForLink,
+                "Auf GitHub melden",
+                "Kopieren",
+                "Schließen",
+                "Kein GitHub-Konto? Schick den Bericht an",
+                "crashes@example.com",
+            ],
             Texts(window));
         Assert.Equal("Absturzbericht", AutomationProperties.GetName(Single<TextBox>(window)));
     }, CancellationToken.None);
@@ -91,6 +100,47 @@ public sealed class CrashReportWindowTests
 
         Assert.Equal(ShortReport, await window.Clipboard!.TryGetTextAsync());
         Assert.Contains("Der Bericht ist in der Zwischenablage.", Texts(window));
+        return true;
+    }, CancellationToken.None);
+
+    [Fact]
+    public Task Shows_the_contact_under_the_buttons() => Session.Dispatch(() =>
+    {
+        var window = Open(ShortReport, contact: "crashes@example.com");
+
+        Assert.Equal(["No GitHub account? Send the report to", "crashes@example.com"], Texts(window)[^2..]);
+        Assert.Equal("crashes@example.com", Single<HyperlinkButton>(window).Content);
+        Assert.NotNull(window.CaptureRenderedFrame());
+    }, CancellationToken.None);
+
+    [Fact]
+    public Task The_contact_copies_the_report_and_opens() => Session.Dispatch(async () =>
+    {
+        var opened = new List<CrashReport>();
+        var window = Open(ShortReport, contact: "crashes@example.com", openContact: opened.Add);
+        // The clipboard outlives each test, and others put this same report on it.
+        await window.Clipboard!.ClearAsync();
+
+        Single<HyperlinkButton>(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(ShortReport, await window.Clipboard!.TryGetTextAsync());
+        Assert.Equal("crashes@example.com", Assert.Single(opened).Contact);
+        Assert.Contains("The report is on the clipboard. Paste it into your message.", Texts(window));
+        return true;
+    }, CancellationToken.None);
+
+    [Fact]
+    public Task Says_the_report_is_on_the_clipboard_when_nothing_opens() => Session.Dispatch(async () =>
+    {
+        var window = Open(ShortReport, contact: "crashes@example.com", openContact: _ => throw new InvalidOperationException("No mail app."));
+        await window.Clipboard!.ClearAsync();
+
+        Single<HyperlinkButton>(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(ShortReport, await window.Clipboard!.TryGetTextAsync());
+        Assert.Contains("Nothing opened, but the report is on the clipboard.", Texts(window));
         return true;
     }, CancellationToken.None);
 
@@ -132,11 +182,14 @@ public sealed class CrashReportWindowTests
         Dismiss = "Schließen",
         ReportName = "Absturzbericht",
         Copied = "Der Bericht ist in der Zwischenablage.",
+        Contact = "Kein GitHub-Konto? Schick den Bericht an",
     };
 
-    private static CrashReportWindow Open(string text, CrashReportStrings? strings = null)
+    // openContact stands in for the shell, so no test opens a mail app or a browser.
+    private static CrashReportWindow Open(
+        string text, CrashReportStrings? strings = null, string? contact = null, Action<CrashReport>? openContact = null)
     {
-        var window = new CrashReportWindow(new CrashReport("Sample", "hazeliscoding/staypaw", text, strings: strings));
+        var window = new CrashReportWindow(new CrashReport("Sample", "hazeliscoding/staypaw", text, contact, strings), openContact);
         window.Show();
         Dispatcher.UIThread.RunJobs();
         return window;

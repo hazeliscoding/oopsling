@@ -24,6 +24,34 @@ public class CrashReportsTests
     public void A_repo_is_an_owner_and_a_name(string repo) => Assert.True(CrashReports.IsRepo(repo));
 
     [Fact]
+    public void Start_wants_the_contact_as_an_email_address_or_an_https_link() =>
+        Assert.Contains("\"example.com\"", Assert.Throws<ArgumentException>(() => CrashReports.Start("Sample", "hazeliscoding/staypaw", "example.com")).Message);
+
+    // The contact becomes a link the shell opens, so only these two kinds get through.
+    [Theory]
+    [InlineData("")]
+    [InlineData("example.com")]
+    [InlineData("crashes@example")]
+    [InlineData("crashes@@example.com")]
+    [InlineData("crashes @example.com")]
+    [InlineData("crashes@example.com?subject=x")]
+    [InlineData("a@example.com,b@example.com")]
+    [InlineData("mailto:crashes@example.com")]
+    [InlineData("http://example.com/support")]
+    [InlineData("https://")]
+    [InlineData("https://example.com/a b")]
+    [InlineData("file:///C:/Windows/notepad.exe")]
+    [InlineData("javascript:alert(1)")]
+    public void Anything_else_is_not_a_contact(string contact) => Assert.False(CrashReports.IsContact(contact));
+
+    [Theory]
+    [InlineData("crashes@example.com")]
+    [InlineData("first.last+app@mail.example.org")]
+    [InlineData("https://example.com/support")]
+    [InlineData("https://discord.gg/abc123")]
+    public void A_contact_is_an_email_address_or_an_https_link(string contact) => Assert.True(CrashReports.IsContact(contact));
+
+    [Fact]
     public void Start_wants_an_app_name_it_can_use_as_a_folder() =>
         Assert.Contains("\"Sample/../elsewhere\"", Assert.Throws<ArgumentException>(() => CrashReports.Start("Sample/../elsewhere", "hazeliscoding/staypaw")).Message);
 

@@ -39,6 +39,19 @@ public sealed record CrashReportStrings
     /// <summary>When Report on GitHub finds no browser.</summary>
     public string NoBrowser { get; init; } = "No browser opened. Copy the report and file it on GitHub yourself.";
 
+    /// <summary>Under the buttons, before the contact, when the host gave one.</summary>
+    public string Contact { get; init; } = "No GitHub account? Send the report to";
+
+    /// <summary>After the contact opens.</summary>
+    public string CopiedForContact { get; init; } = "The report is on the clipboard. Paste it into your message.";
+
+    /// <summary>When the report can't be copied, so the contact isn't opened.</summary>
+    public string CopyFailedBeforeContact { get; init; } = "The report couldn't be copied, so nothing was opened. Select it "
+        + "above and copy it from there.";
+
+    /// <summary>When nothing can open the contact.</summary>
+    public string NothingOpened { get; init; } = "Nothing opened, but the report is on the clipboard.";
+
     /// <summary>
     /// Starts the issue of a report too long for a link, so the user reads it on GitHub. It reaches the issue if they
     /// don't paste over it.
