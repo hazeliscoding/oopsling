@@ -84,7 +84,11 @@ public sealed class CrashReportWindow : Window
             bottom.Children.Add(new WrapPanel
             {
                 HorizontalAlignment = HorizontalAlignment.Right,
-                Children = { new TextBlock { Text = strings.Contact, Margin = new(0, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center }, link },
+                Children =
+                {
+                    new TextBlock { Text = strings.Contact, TextWrapping = TextWrapping.Wrap, Margin = new(0, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center },
+                    link,
+                },
             });
         }
 
