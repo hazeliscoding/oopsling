@@ -99,6 +99,7 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 |---|---|---|
 | [0.1.0-preview.1](https://www.nuget.org/packages/Oopsling.Avalonia/0.1.0-preview.1) | 2026-10-27 | M0 to M3: the masked report written while dying, the window that shows it once, the filled-in issue link, the release workflow, and Staypaw as the first host. |
 | [1.0.0](https://github.com/hazeliscoding/oopsling/releases/tag/v1.0.0) | 2026-10-27 | M4: install steps, a quick start and a demo in the README, the fresh-install check on each OS, `SECURITY.md` and `CONTRIBUTING.md`, and error messages that name what they refused. |
+| [1.1.0](https://github.com/hazeliscoding/oopsling/releases/tag/v1.1.0) | 2026-10-27 | M5's code: a contact for users without a GitHub account, the window's text in the host's language, and each pack checked against 1.0.0's API. |
 
 ## M4: 1.0, finishing
 
@@ -122,6 +123,8 @@ Everything else in M4 shipped as 1.0.0.
 - `Start(appName, repo)` behaves as in 1.0: tests pin every English string 1.0 showed, word for word, and the window without a contact or strings shows exactly 1.0's text. Package validation against 1.0.0 passes, and failed with CP0002 when `Start(appName, repo)` was given an optional contact instead.
 - Positive controls: accepting `http://`, spaces or `?` in a contact each fails a test, and so do a contact click that doesn't copy the report and one that opens before it copies. The branch where the copy fails isn't tested, since the headless clipboard can't be made to fail.
 - A review agent read the change. Its fixes: a blank heading falls back to English, the contact sentence wraps, addresses are an allow-list, and the README example says to give every string.
+- 1.1.0 is on nuget.org, and the fresh-install check passed against it on Windows, macOS and Linux: [run 40627254210](https://github.com/hazeliscoding/oopsling/actions/runs/40627254210).
+- Left: Staypaw takes 1.1 with the contact `staypaw.crashes.happier582@passinbox.com`, an alias the owner made for it.
 
 ## M6: Sweepling, the second host
 
