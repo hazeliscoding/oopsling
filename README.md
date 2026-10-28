@@ -119,6 +119,7 @@ CrashReports.Start("My App", "owner/my-app",
         Copy = "Kopieren",
         Dismiss = "Schließen",
         Contact = "Kein GitHub-Konto? Schick den Bericht an",
+        // Give the rest too, such as Intro, which names the Report on GitHub button, and CutNote.
     });
 ```
 
