@@ -82,7 +82,7 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 ## Decisions after 1.0 (2026-10-27)
 
 - **Open work stays in this file,** the owner's call, not in GitHub issues, milestones or a Project board. Work goes from the next unchecked item, as before. This gives up a public board that contributors could follow.
-- **The finished milestones are folded into Shipped.** M0 to M4's checklists, with the evidence for each "Done when", are in `git show v1.0.0:ROADMAP.md`. M4's notes from after the tag (the 1.0.0 publish, the fresh-install check against it, and Staypaw taking it) are in `git show 80f299f:ROADMAP.md`. M5's checklist and evidence are in `git show 943d075:ROADMAP.md`. M4's last box, a Staypaw release with Oopsling in it, is in `git show ede389b:ROADMAP.md`. Oopsling commits straight to `main`, so those hashes stay.
+- **The finished milestones are folded into Shipped.** M0 to M4's checklists, with the evidence for each "Done when", are in `git show v1.0.0:ROADMAP.md`. M4's notes from after the tag (the 1.0.0 publish, the fresh-install check against it, and Staypaw taking it) are in `git show 80f299f:ROADMAP.md`. M5's checklist and evidence are in `git show 943d075:ROADMAP.md`. M4's last box, a Staypaw release with Oopsling in it, is in `git show ede389b:ROADMAP.md`. M6's checklist and evidence are in `git show 03a1745:ROADMAP.md`. Oopsling commits straight to `main`, so those hashes stay.
 - **The next milestones,** in this order, the owner's picks from Later: a contact line for users without a GitHub account, and the window's text in any language (1.1); Sweepling as the second host; native crashes on Windows (1.2). The order puts the small additions first, since Staypaw's users include gamers without GitHub accounts, and the large one last. It gives up starting on native crashes, which Staypaw may hit, until after Sweepling. *The versions moved on 2026-11-12: Sweepling needed 1.2, so native crashes are 1.3. See "Decisions in M6".*
 - **.NET 10 only stays.** .NET 8 and 9 both reach the end of their support in November 2026, so targeting them would serve hosts for a few weeks. This gives up hosts that can't move to .NET 10, such as CyberRadio Assistant on .NET 8.
 
@@ -108,23 +108,7 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 | [0.1.0-preview.1](https://www.nuget.org/packages/Oopsling.Avalonia/0.1.0-preview.1) | 2026-10-27 | M0 to M3: the masked report written while dying, the window that shows it once, the filled-in issue link, the release workflow, and Staypaw as the first host. |
 | [1.0.0](https://github.com/hazeliscoding/oopsling/releases/tag/v1.0.0) | 2026-10-27 | M4: install steps, a quick start and a demo in the README, the fresh-install check on each OS, `SECURITY.md` and `CONTRIBUTING.md`, and error messages that name what they refused. |
 | [1.1.0](https://github.com/hazeliscoding/oopsling/releases/tag/v1.1.0) | 2026-10-27 | M5: a contact for users without a GitHub account, the window's text in the host's language, and each pack checked against 1.0.0's API. |
-| [1.2.0](https://github.com/hazeliscoding/oopsling/releases/tag/v1.2.0) | 2026-11-13 | M6's code: a folder of the host's own for reports, for apps whose installer empties theirs, and each pack checked against 1.1.0's API. |
-
-## M6: Sweepling, the second host
-
-- [x] Sweepling takes `Oopsling.Avalonia` from nuget.org, and its no-network guard covers Oopsling's assemblies, as Staypaw's does.
-- [x] Anything Sweepling needs that only suited Staypaw is fixed in Oopsling first, with a dated decision.
-
-**Done when:** a Sweepling build made to crash shows the window at its next launch and opens a filled-in issue page for Sweepling's repo, and a Sweepling release with Oopsling in it has shipped.
-
-**Done on 2026-11-13.** The crash check ran on 2026-11-12, with Oopsling packed as `1.2.0-local.1` from `eb1fec4`. 1.2.0 was tagged on `3a68fad`, which changed only docs after that.
-
-- Sweepling's tests pass with it, including a guard that fails if Oopsling's assemblies reference networking, and a gate that holds an update until every window closes. Package validation against 1.1.0 failed when 1.1's `Start` overload was removed for a check.
-- A throwaway Sweepling build that throws on the UI thread wrote its report to `%APPDATA%\Sweepling\crashes` and exited with the CLR's usual code. The report masked the home folder, and held no user, machine or domain name.
-- At the next launch, Sweepling's NativeAOT build showed "Sweepling closed because of an error" with the report. Report on GitHub opened `hazeliscoding/sweepling`'s blank new-issue page with the title and report filled in, and nothing was submitted. Dismiss closed the window, and Sweepling kept running in the tray.
-- Oopsling costs Sweepling 226,304 bytes of exe, from 25,654,272 to 25,880,576. Tray-only idle after 75 s, before and after: working set 33.8 and 34.8 MB, private bytes 13.6 and 13.8 MB, private working set 10.6 and 10.7 MB, 6 threads each, within the noise between runs.
-- 1.2.0 is on nuget.org, published on 2026-11-13. Sweepling's `main` takes it from there (hazeliscoding/sweepling@5fe4540), its 122 tests pass with it, and its guard covers Oopsling's assemblies (hazeliscoding/sweepling@ecb4254).
-- [Sweepling 0.2.0](https://github.com/hazeliscoding/sweepling/releases/tag/v0.2.0) shipped on 2026-11-13 with Oopsling 1.2.0. Its Setup is signed and timestamped, and its notes tell users about crash reports they file themselves.
+| [1.2.0](https://github.com/hazeliscoding/oopsling/releases/tag/v1.2.0) | 2026-11-13 | M6: a folder of the host's own for reports, for apps whose installer empties theirs, each pack checked against 1.1.0's API, and Sweepling as the second host. |
 
 ## M7: 1.3, native crashes on Windows
 
