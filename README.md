@@ -128,7 +128,7 @@ The contact goes after the `Contact` sentence, as a link. An email address opens
 
 ## Status
 
-**1.2.** It's on NuGet as [`Oopsling`](https://www.nuget.org/packages/Oopsling) and [`Oopsling.Avalonia`](https://www.nuget.org/packages/Oopsling.Avalonia), and its API follows semantic versioning from here. It works on Windows, macOS and Linux, NativeAOT or not. [Staypaw](https://github.com/hazeliscoding/staypaw) has shipped with it since v1.2.1, and [Sweepling](https://github.com/hazeliscoding/sweepling) is next. [ROADMAP.md](ROADMAP.md) has the decisions and milestones.
+**1.2.** It's on NuGet as [`Oopsling`](https://www.nuget.org/packages/Oopsling) and [`Oopsling.Avalonia`](https://www.nuget.org/packages/Oopsling.Avalonia), and its API follows semantic versioning from here. It works on Windows, macOS and Linux, NativeAOT or not. [Staypaw](https://github.com/hazeliscoding/staypaw) has shipped with it since v1.2.1, and [Sweepling](https://github.com/hazeliscoding/sweepling) since v0.2.0. [ROADMAP.md](ROADMAP.md) has the decisions and milestones.
 
 ## Alternatives
 
