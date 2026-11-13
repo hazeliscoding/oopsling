@@ -101,6 +101,7 @@ CrashReportWindow.ShowUnshown(desktop.MainWindow);
 That's all. The report is read once the main window is open, so a launch costs only the handler and a check for the folder.
 
 - **A tray app** with no main window calls `CrashReportWindow.ShowUnshown()` with no owner, and has to keep running when its last window closes, with `ShutdownMode.OnExplicitShutdown`.
+- **An app that restarts itself into updates** should wait while the window is open, since a report counts as shown once it opens. Class handlers for `Window.WindowOpenedEvent` and `Window.WindowClosedEvent` on `CrashReportWindow` tell you when that is, as [Sweepling's do](https://github.com/hazeliscoding/sweepling/blob/main/src/Sweepling/App.axaml.cs).
 - **Without Avalonia,** add `Oopsling` instead. At the next launch, `CrashReports.TakeUnshown()` returns the report the user hasn't seen, if there is one, with its `Text` to show and `OpenIssue()` to open the filled-in issue.
 - **Reports** are Markdown files in a `crashes` folder under the app's name in local app data: `%LOCALAPPDATA%` on Windows, `~/Library/Application Support` on macOS and `~/.local/share` on Linux. The newest 10 are kept. If your installer empties that folder, as Velopack's Setup does when the pack ID is your app's name, pass `Start` a `folder` of your own, since 1.2.
 - **Issue templates:** if your repo has them, keep blank issues enabled. The link opens a blank issue with the report filled in, and with blank issues off, GitHub may show users the template picker instead.
@@ -127,7 +128,7 @@ The contact goes after the `Contact` sentence, as a link. An email address opens
 
 ## Status
 
-**1.1.** It's on NuGet as [`Oopsling`](https://www.nuget.org/packages/Oopsling) and [`Oopsling.Avalonia`](https://www.nuget.org/packages/Oopsling.Avalonia), and its API follows semantic versioning from here. It works on Windows, macOS and Linux, NativeAOT or not. [Staypaw](https://github.com/hazeliscoding/staypaw)'s next release, v1.2, is the first app to ship with it. [ROADMAP.md](ROADMAP.md) has the decisions and milestones.
+**1.2.** It's on NuGet as [`Oopsling`](https://www.nuget.org/packages/Oopsling) and [`Oopsling.Avalonia`](https://www.nuget.org/packages/Oopsling.Avalonia), and its API follows semantic versioning from here. It works on Windows, macOS and Linux, NativeAOT or not. [Staypaw](https://github.com/hazeliscoding/staypaw) has shipped with it since v1.2.1, and [Sweepling](https://github.com/hazeliscoding/sweepling) is next. [ROADMAP.md](ROADMAP.md) has the decisions and milestones.
 
 ## Alternatives
 
