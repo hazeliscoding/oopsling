@@ -36,7 +36,7 @@ public sealed class CrashReport
     public string AppName { get; }
 
     /// <summary>
-    /// The window's text, as passed to <see cref="CrashReports.Start(string, string, string, CrashReportStrings)"/>, with
+    /// The window's text, as passed to <see cref="CrashReports.Start(string, string, string, CrashReportStrings, string)"/>, with
     /// English for each string left out.
     /// </summary>
     public CrashReportStrings Strings { get; }

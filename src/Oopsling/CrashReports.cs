@@ -14,9 +14,18 @@ public static partial class CrashReports
     private static (string Folder, string App, string Repo, string? Contact, CrashReportStrings? Strings)? _started;
 
     /// <summary>Starts recording crashes. Call it once, first thing in <c>Main</c>.</summary>
-    /// <param name="appName">The app's name as users see it. Reports go in a <c>crashes</c> folder under it in local app data.</param>
+    /// <param name="appName">
+    /// The app's name as users see it. Unless a folder is given, reports go in a <c>crashes</c> folder under it in local
+    /// app data.
+    /// </param>
     /// <param name="repo">The GitHub repo that reports are filed in, as <c>owner/name</c>.</param>
-    public static void Start(string appName, string repo) => Start(appName, repo, null, null);
+    public static void Start(string appName, string repo) => Start(appName, repo, null, null, null);
+
+    // 1.1's overload, kept for apps built against it. Its parameters have no defaults, or a call naming only the contact
+    // would match this overload and the next one alike.
+    /// <inheritdoc cref="Start(string, string, string?, CrashReportStrings?, string?)"/>
+    public static void Start(string appName, string repo, string? contact, CrashReportStrings? strings) =>
+        Start(appName, repo, contact, strings, null);
 
     /// <inheritdoc cref="Start(string, string)"/>
     /// <param name="contact">
@@ -24,7 +33,11 @@ public static partial class CrashReports
     /// The window shows it under its buttons.
     /// </param>
     /// <param name="strings">The window's text in the app's language. Each string left out stays English.</param>
-    public static void Start(string appName, string repo, string? contact = null, CrashReportStrings? strings = null)
+    /// <param name="folder">
+    /// The full path of the folder reports go in, for an app whose installer empties its folder in local app data, as
+    /// Velopack's Setup does when the pack ID is the app's name.
+    /// </param>
+    public static void Start(string appName, string repo, string? contact = null, CrashReportStrings? strings = null, string? folder = null)
     {
         // A second handler would record each crash twice.
         if (_started is not null)
@@ -50,9 +63,15 @@ public static partial class CrashReports
             throw new ArgumentException($"Expected the contact as an email address or an https link, like crashes@example.com, but got \"{contact}\".", nameof(contact));
         }
 
+        // A relative folder would land wherever the app was started from, which for a login start is often System32.
+        if (folder is not null && !Path.IsPathFullyQualified(folder))
+        {
+            throw new ArgumentException($"Expected the folder as a full path, but got \"{folder}\".", nameof(folder));
+        }
+
         // Everything is worked out now, so a crash only formats and writes one file.
         var version = Version();
-        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), appName, "crashes");
+        folder ??= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), appName, "crashes");
         var recorder = new Recorder(
             folder,
             $"{appName} {version.Split('+')[0]}",

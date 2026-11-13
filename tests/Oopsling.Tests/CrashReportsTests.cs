@@ -59,6 +59,14 @@ public class CrashReportsTests
     public void Start_wants_an_app_name_it_can_use_as_a_folder() =>
         Assert.Contains("\"Sample/../elsewhere\"", Assert.Throws<ArgumentException>(() => CrashReports.Start("Sample/../elsewhere", "hazeliscoding/staypaw")).Message);
 
+    // A relative folder would land wherever the app was started from, which for a login start is often System32.
+    [Theory]
+    [InlineData("")]
+    [InlineData("crashes")]
+    [InlineData("Sample/crashes")]
+    public void Start_wants_the_folder_as_a_full_path(string folder) =>
+        Assert.Contains($"\"{folder}\"", Assert.Throws<ArgumentException>(() => CrashReports.Start("Sample", "hazeliscoding/staypaw", folder: folder)).Message);
+
     [Fact]
     public void TakeUnshown_wants_Start_first() => Assert.Throws<InvalidOperationException>(CrashReports.TakeUnshown);
 
