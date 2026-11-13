@@ -105,9 +105,11 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 
 Everything else in M4 shipped as 1.0.0.
 
-- [ ] A Staypaw release with Oopsling in it has shipped. Staypaw's `main` takes 1.1.0 for v1.2.1; when it ships is the owner's call.
+- [x] A Staypaw release with Oopsling in it has shipped. Staypaw's `main` takes 1.1.0 for v1.2.1; when it ships is the owner's call.
 
 **Done when:** that Staypaw release is out.
+
+**Checked on 2026-11-12:** [Staypaw 1.2.1](https://github.com/hazeliscoding/staypaw/releases/tag/v1.2.1) shipped on 2026-11-01 with `Oopsling.Avalonia` 1.1.0, and its release notes tell users about crash reports they send themselves, by email if they have no GitHub account. Staypaw 1.3.0, out on 2026-11-02, keeps 1.1.0.
 
 ## M6: Sweepling, the second host
 
