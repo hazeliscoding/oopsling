@@ -99,6 +99,7 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 - **The folder comes in a third `Start` overload,** whose parameters after the repo are all optional. 1.1's overload stays for apps built against it, without its defaults, or a call naming only the contact would match both. This gives up a short list of overloads.
 - **Package validation compares each pack with 1.1.0,** the newest release, so 1.1's overload can't be dropped: removing it fails the pack. 1.1.0 was checked against 1.0.0, so 1.0's API is still covered. This gives up nothing.
 - **It ships as 1.2.0, and native crashes on Windows become 1.3,** since a new parameter is a minor version. This gives up the version number the plan gave native crashes.
+- **A host that restarts itself into updates waits while the window is open.** A report counts as shown once the window opens, so a restart then closes it unfiled for good. Sweepling already holds an update while its review window is open, and holds it for the crash report too, through Avalonia's class handlers for `Window.WindowOpenedEvent` and `WindowClosedEvent` on `CrashReportWindow`. They catch the window whether or not it has an owner, so `ShowUnshown` needs no new API, and the README tells hosts how. This gives up a callback from Oopsling itself, which stays under Later.
 
 ## Shipped
 
@@ -114,6 +115,14 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 - [ ] Anything Sweepling needs that only suited Staypaw is fixed in Oopsling first, with a dated decision.
 
 **Done when:** a Sweepling build made to crash shows the window at its next launch and opens a filled-in issue page for Sweepling's repo, and a Sweepling release with Oopsling in it has shipped.
+
+**So far, on 2026-11-12,** with Oopsling packed as `1.2.0-local.1` from `eb1fec4`:
+
+- Sweepling's tests pass with it, including a guard that fails if Oopsling's assemblies reference networking, and a gate that holds an update until every window closes. Package validation against 1.1.0 failed when 1.1's `Start` overload was removed for a check.
+- A throwaway Sweepling build that throws on the UI thread wrote its report to `%APPDATA%\Sweepling\crashes` and exited with the CLR's usual code. The report masked the home folder, and held no user, machine or domain name.
+- At the next launch, Sweepling's NativeAOT build showed "Sweepling closed because of an error" with the report. Report on GitHub opened `hazeliscoding/sweepling`'s blank new-issue page with the title and report filled in, and nothing was submitted. Dismiss closed the window, and Sweepling kept running in the tray.
+- Oopsling costs Sweepling 226,304 bytes of exe, from 25,654,272 to 25,880,576. Tray-only idle after 75 s, before and after: working set 33.8 and 34.8 MB, private bytes 13.6 and 13.8 MB, private working set 10.6 and 10.7 MB, 6 threads each, within the noise between runs.
+- Left: publish 1.2.0, Sweepling takes it from nuget.org, and a Sweepling release with it ships.
 
 ## M7: 1.3, native crashes on Windows
 
