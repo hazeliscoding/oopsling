@@ -102,7 +102,7 @@ That's all. The report is read once the main window is open, so a launch costs o
 
 - **A tray app** with no main window calls `CrashReportWindow.ShowUnshown()` with no owner, and has to keep running when its last window closes, with `ShutdownMode.OnExplicitShutdown`.
 - **Without Avalonia,** add `Oopsling` instead. At the next launch, `CrashReports.TakeUnshown()` returns the report the user hasn't seen, if there is one, with its `Text` to show and `OpenIssue()` to open the filled-in issue.
-- **Reports** are Markdown files in a `crashes` folder under the app's name in local app data: `%LOCALAPPDATA%` on Windows, `~/Library/Application Support` on macOS and `~/.local/share` on Linux. The newest 10 are kept.
+- **Reports** are Markdown files in a `crashes` folder under the app's name in local app data: `%LOCALAPPDATA%` on Windows, `~/Library/Application Support` on macOS and `~/.local/share` on Linux. The newest 10 are kept. If your installer empties that folder, as Velopack's Setup does when the pack ID is your app's name, pass `Start` a `folder` of your own, since 1.2.
 - **Issue templates:** if your repo has them, keep blank issues enabled. The link opens a blank issue with the report filled in, and with blank issues off, GitHub may show users the template picker instead.
 
 ### A contact, and your app's language

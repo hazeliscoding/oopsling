@@ -32,6 +32,6 @@ CrashReportWindow.ShowUnshown(desktop.MainWindow);
 
 A tray app with no main window calls `CrashReportWindow.ShowUnshown()` with no owner instead.
 
-For users without a GitHub account, `Start` also takes a contact, an email address or an `https://` link, which the window shows under its buttons. It takes the window's text in your app's language too, as a `CrashReportStrings` with whole sentences. Each string you leave out stays English.
+For users without a GitHub account, `Start` also takes a contact, an email address or an `https://` link, which the window shows under its buttons. It takes the window's text in your app's language too, as a `CrashReportStrings` with whole sentences. Each string you leave out stays English. If your installer empties your app's folder in local app data, as Velopack's Setup does when the pack ID is your app's name, it takes a `folder` for the reports too.
 
 The repo has the details, the decisions behind them, and the roadmap: https://github.com/hazeliscoding/oopsling
