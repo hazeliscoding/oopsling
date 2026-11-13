@@ -117,14 +117,14 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 
 **Done when:** a Sweepling build made to crash shows the window at its next launch and opens a filled-in issue page for Sweepling's repo, and a Sweepling release with Oopsling in it has shipped.
 
-**So far, on 2026-11-12,** with Oopsling packed as `1.2.0-local.1` from `eb1fec4`:
+**Done on 2026-11-13.** The crash check ran on 2026-11-12, with Oopsling packed as `1.2.0-local.1` from `eb1fec4`. 1.2.0 was tagged on `3a68fad`, which changed only docs after that.
 
 - Sweepling's tests pass with it, including a guard that fails if Oopsling's assemblies reference networking, and a gate that holds an update until every window closes. Package validation against 1.1.0 failed when 1.1's `Start` overload was removed for a check.
 - A throwaway Sweepling build that throws on the UI thread wrote its report to `%APPDATA%\Sweepling\crashes` and exited with the CLR's usual code. The report masked the home folder, and held no user, machine or domain name.
 - At the next launch, Sweepling's NativeAOT build showed "Sweepling closed because of an error" with the report. Report on GitHub opened `hazeliscoding/sweepling`'s blank new-issue page with the title and report filled in, and nothing was submitted. Dismiss closed the window, and Sweepling kept running in the tray.
 - Oopsling costs Sweepling 226,304 bytes of exe, from 25,654,272 to 25,880,576. Tray-only idle after 75 s, before and after: working set 33.8 and 34.8 MB, private bytes 13.6 and 13.8 MB, private working set 10.6 and 10.7 MB, 6 threads each, within the noise between runs.
 - 1.2.0 is on nuget.org, published on 2026-11-13. Sweepling's `main` takes it from there (hazeliscoding/sweepling@5fe4540), its 122 tests pass with it, and its guard covers Oopsling's assemblies (hazeliscoding/sweepling@ecb4254).
-- Left: a Sweepling release with Oopsling in it ships, planned as v0.2.0.
+- [Sweepling 0.2.0](https://github.com/hazeliscoding/sweepling/releases/tag/v0.2.0) shipped on 2026-11-13 with Oopsling 1.2.0. Its Setup is signed and timestamped, and its notes tell users about crash reports they file themselves.
 
 ## M7: 1.3, native crashes on Windows
 
