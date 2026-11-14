@@ -43,14 +43,16 @@ internal sealed class Recorder(string folder, string app, string details, Mask m
     private static string Name(string? newest)
     {
         var time = DateTime.UtcNow;
-        if (newest is not null
-            && DateTime.TryParseExact(Path.GetFileNameWithoutExtension(newest).AsSpan("crash-".Length), Time, CultureInfo.InvariantCulture,
-                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var last)
-            && last >= time)
+        if (newest is not null && TimeOf(newest) is { } last && last >= time)
         {
             time = last.AddMilliseconds(1);
         }
 
         return "crash-" + time.ToString(Time, CultureInfo.InvariantCulture) + ".md";
     }
+
+    /// <summary>When the report with this name was written, in UTC, or null for a name Oopsling didn't give.</summary>
+    public static DateTime? TimeOf(string report) =>
+        DateTime.TryParseExact(Path.GetFileNameWithoutExtension(report).AsSpan("crash-".Length), Time, CultureInfo.InvariantCulture,
+            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var time) ? time : null;
 }

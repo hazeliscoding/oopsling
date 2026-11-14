@@ -9,15 +9,27 @@ internal static class Report
     private const int MaxLength = 65_536;
 
     // Only the exception's text is masked: the title and details are built by Oopsling from names and versions.
-    public static string Format(Exception exception, string app, string details, Mask mask)
-    {
-        var text = MaskAndCut(Describe(exception), mask);
+    public static string Format(Exception exception, string app, string details, Mask mask) =>
+        Format($"{app} crashed: {Cause(exception).GetType().Name}", MaskAndCut(Describe(exception), mask), details);
 
+    // The module's name comes from Windows, not Oopsling, so the title masks it too.
+    public static string Format(NativeCrash crash, string? runtime, string app, string details, Mask mask)
+    {
+        var code = $"0x{crash.Code:X8}";
+        var name = Name(crash.Code);
+        var text = $"{(name is null ? "Exception " + code : $"{char.ToUpperInvariant(name[0])}{name[1..]} ({code})")} at {crash.Module}+0x{crash.Offset:x}\n"
+            + $"Module: {crash.ModulePath}, version {crash.ModuleVersion}"
+            + (runtime is null ? "" : "\n\n" + runtime.ReplaceLineEndings("\n").TrimEnd());
+        return Format($"{app} crashed: {(name is null ? "exception " + code : $"{name} ({code})")} in {mask.Apply(crash.Module)}", MaskAndCut(text, mask), details);
+    }
+
+    private static string Format(string title, string text, string details)
+    {
         // Longer than any run of backticks in the text, so a message can't end the code block and have the rest read as
         // Markdown, where an @mention notifies someone when the issue is filed.
         var fence = new string('`', Math.Max(3, LongestRun(text, '`') + 1));
         return $"""
-            {app} crashed: {Cause(exception).GetType().Name}
+            {title}
 
             {fence}text
             {text}
@@ -27,6 +39,21 @@ internal static class Report
 
             """;
     }
+
+    // Windows' names for the codes a .NET app most often ends with.
+    private static string? Name(uint code) => code switch
+    {
+        0xC0000005 => "access violation",
+        0xC00000FD => "stack overflow",
+        // NativeAOT's FailFast and unhandled exceptions end this way too, through RaiseFailFastException.
+        0xC0000409 => "fail fast",
+        0xC0000374 => "heap corruption",
+        0xC000001D => "illegal instruction",
+        0xC0000094 => "integer division by zero",
+        0xE0434352 => ".NET exception",
+        0x80131623 => "Environment.FailFast",
+        _ => null,
+    };
 
     // Avalonia calls event handlers through reflection, so the exception that ended the app often arrives wrapped.
     private static Exception Cause(Exception exception) =>

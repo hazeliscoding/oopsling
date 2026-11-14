@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using System.Runtime;
 using System.Runtime.InteropServices;
@@ -11,7 +12,7 @@ namespace Oopsling;
 /// </summary>
 public static partial class CrashReports
 {
-    private static (string Folder, string App, string Repo, string? Contact, CrashReportStrings? Strings)? _started;
+    private static (string Folder, string App, string Repo, string? Contact, CrashReportStrings? Strings, Mask Mask)? _started;
 
     /// <summary>Starts recording crashes. Call it once, first thing in <c>Main</c>.</summary>
     /// <param name="appName">
@@ -72,16 +73,13 @@ public static partial class CrashReports
         // Everything is worked out now, so a crash only formats and writes one file.
         var version = Version();
         folder ??= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), appName, "crashes");
-        var recorder = new Recorder(
-            folder,
-            $"{appName} {version.Split('+')[0]}",
-            Details(appName, version),
-            new Mask(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                Read(() => Environment.UserName),
-                Read(() => Environment.MachineName),
-                Read(() => Environment.UserDomainName)));
-        _started = (folder, appName, repo, contact, strings);
+        var mask = new Mask(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            Read(() => Environment.UserName),
+            Read(() => Environment.MachineName),
+            Read(() => Environment.UserDomainName));
+        var recorder = new Recorder(folder, $"{appName} {version.Split('+')[0]}", Details(appName, version), mask);
+        _started = (folder, appName, repo, contact, strings, mask);
 
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
@@ -94,7 +92,8 @@ public static partial class CrashReports
 
     /// <summary>
     /// The newest report not yet shown, or null when the app hasn't crashed since one was. A report counts as shown once
-    /// this returns it, so each crash is shown once.
+    /// this returns it, so each crash is shown once. On Windows it also reads the native crashes Windows recorded for the
+    /// app, such as an access violation or a stack overflow.
     /// </summary>
     public static CrashReport? TakeUnshown()
     {
@@ -103,24 +102,41 @@ public static partial class CrashReports
             throw new InvalidOperationException("CrashReports.Start hasn't been called. Call it first thing in Main, before showing reports.");
         }
 
-        return TakeUnshown(started.Folder, started.App, started.Repo, started.Contact, started.Strings);
+        return TakeUnshown(started.Folder, started.App, started.Repo, started.Contact, started.Strings, Log(), started.Mask);
     }
 
     // Report names sort by time, so the newest is the last name and "shown" only remembers one name. A report older than
-    // the last one shown is never shown: the newer crash already told the user.
-    internal static CrashReport? TakeUnshown(string folder, string app, string repo, string? contact = null, CrashReportStrings? strings = null)
+    // the last one shown is never shown: the newer crash already told the user. The same goes for a native crash, which
+    // is newest by its time and remembered by its record number.
+    internal static CrashReport? TakeUnshown(
+        string folder, string app, string repo, string? contact = null, CrashReportStrings? strings = null, ICrashLog? log = null, Mask? mask = null)
     {
         try
         {
-            var newest = Path.GetFileName(Directory.GetFiles(folder, "crash-*.md").Max(StringComparer.Ordinal));
+            var reports = Directory.Exists(folder)
+                ? Directory.GetFiles(folder, "crash-*.md").Select(path => Path.GetFileName(path)).Order(StringComparer.Ordinal).ToList()
+                : [];
             var shown = Path.Combine(folder, "shown");
-            if (newest is null || (File.Exists(shown) && string.CompareOrdinal(newest, File.ReadAllText(shown)) <= 0))
+            var newest = reports.LastOrDefault();
+            if (newest is not null && File.Exists(shown) && string.CompareOrdinal(newest, File.ReadAllText(shown)) <= 0)
             {
-                return null;
+                newest = null;
             }
 
-            var text = File.ReadAllText(Path.Combine(folder, newest)).ReplaceLineEndings("\n");
-            File.WriteAllText(shown, newest);
+            var crash = log is null ? null : TakeNative(folder, reports, log);
+            string? text = null;
+            if (newest is not null)
+            {
+                text = File.ReadAllText(Path.Combine(folder, newest)).ReplaceLineEndings("\n");
+                File.WriteAllText(shown, newest);
+            }
+
+            if (crash is not null && (newest is null || crash.Time > Recorder.TimeOf(newest)))
+            {
+                var native = Report.Format(crash, log!.Runtime(crash), $"{app} {crash.AppVersion}", Details(app, crash.AppVersion), mask ?? new Mask("", ""));
+                return new CrashReport(app, repo, native, contact, strings);
+            }
+
             return string.IsNullOrWhiteSpace(text) ? null : new CrashReport(app, repo, text, contact, strings);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -129,6 +145,30 @@ public static partial class CrashReports
             return null;
         }
     }
+
+    // The crashes logged since the last look, or in the last 7 days before the first, since the log keeps them for months.
+    // The newest record read is remembered, whatever app it was about, so the next launch reads only what's new. A crash
+    // whose process wrote a report is skipped: the report says more.
+    private static NativeCrash? TakeNative(string folder, List<string> reports, ICrashLog log)
+    {
+        var looked = Path.Combine(folder, "looked");
+        long? last = File.Exists(looked) && long.TryParse(File.ReadAllText(looked), NumberStyles.None, CultureInfo.InvariantCulture, out var record) ? record : null;
+        var (crashes, newest) = log.Crashes(last ?? 0, last is null ? DateTime.UtcNow.AddDays(-7) : DateTime.UnixEpoch);
+        if (newest > (last ?? 0))
+        {
+            Directory.CreateDirectory(folder);
+            File.WriteAllText(looked, newest.ToString(CultureInfo.InvariantCulture));
+        }
+
+        var written = reports.Select(Recorder.TimeOf).ToList();
+        return crashes.Where(crash => !written.Any(time => time >= crash.Started && time <= crash.Time)).MaxBy(crash => crash.Record);
+    }
+
+    // A host run through the dotnet muxer would see the crashes of every app run that way, so it reads none.
+    private static ICrashLog? Log() =>
+        OperatingSystem.IsWindows() && Environment.ProcessPath is { } path && !Path.GetFileNameWithoutExtension(path).Equals("dotnet", StringComparison.OrdinalIgnoreCase)
+            ? new ApplicationLog(path)
+            : null;
 
     internal static bool IsRepo(string? repo) => repo is not null && Repo().IsMatch(repo);
 

@@ -88,6 +88,61 @@ public class ReportTests
     [Fact]
     public void Survives_an_exception_whose_ToString_throws() => Assert.Contains(nameof(BrokenException), Format(new BrokenException()));
 
+    [Fact]
+    public void A_native_crash_is_titled_by_its_exception_code_and_module() =>
+        Assert.Equal("Sample 0.7.0.0 crashed: access violation (0xC0000005) in ntdll.dll", Format(Native).Split('\n')[0]);
+
+    [Fact]
+    public void A_native_crash_with_a_code_Oopsling_has_no_name_for_is_titled_by_the_number() =>
+        Assert.Equal(
+            "Sample 0.7.0.0 crashed: exception 0xE0000001 in KERNELBASE.dll",
+            Format(Native with { Code = 0xE0000001, Module = "KERNELBASE.dll" }).Split('\n')[0]);
+
+    // The developer looks the offset up in the module's symbols, so it's written as a debugger takes it.
+    [Fact]
+    public void A_native_report_holds_the_offset_in_the_module_and_the_modules_version()
+    {
+        var report = Format(Native);
+
+        Assert.Contains("Access violation (0xC0000005) at ntdll.dll+0x168405", report);
+        Assert.Contains(@"Module: C:\WINDOWS\SYSTEM32\ntdll.dll, version 10.0.26100.1", report);
+    }
+
+    [Fact]
+    public void A_native_report_holds_the_runtimes_message_and_stack() =>
+        Assert.Contains(
+            "Message: gave up\nStack:\n   at Sample.Program.Main()",
+            Format(Native, "Description: The application requested process termination through System.Environment.FailFast.\r\nMessage: gave up\r\nStack:\r\n   at Sample.Program.Main()"));
+
+    // An app installed for one user runs from their home folder, and a JIT build's stack names its source files.
+    [Fact]
+    public void A_native_report_leaves_no_trace_of_a_made_up_user_in_the_paths_an_event_carries()
+    {
+        var report = Format(
+            Native with { Module = "Sample.exe", ModulePath = @"C:\Users\Wren\AppData\Local\Sample\current\Sample.exe" },
+            "Description: The process was terminated due to an unhandled exception.\nStack:\n   at Sample.Program.Main() in C:\\Users\\Wren\\src\\Program.cs:line 19");
+
+        Assert.Contains(@"<home>\AppData\Local\Sample\current\Sample.exe", report);
+        Assert.DoesNotContain("Wren", report, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void A_native_report_ends_with_the_details() => Assert.EndsWith(Details, Format(Native).TrimEnd());
+
+    private static readonly NativeCrash Native = new(
+        Record: 7,
+        Time: new(2026, 11, 14, 7, 0, 1, DateTimeKind.Utc),
+        Started: new(2026, 11, 14, 7, 0, 0, DateTimeKind.Utc),
+        ProcessId: 4242,
+        AppVersion: "0.7.0.0",
+        Module: "ntdll.dll",
+        ModuleVersion: "10.0.26100.1",
+        ModulePath: @"C:\WINDOWS\SYSTEM32\ntdll.dll",
+        Code: 0xC0000005,
+        Offset: 0x168405);
+
+    private static string Format(NativeCrash crash, string? runtime = null) => Report.Format(crash, runtime, "Sample 0.7.0.0", Details, Mask);
+
     private static string Format(Exception exception) => Report.Format(exception, "Sample 1.2.3", Details, Mask);
 
     private static Exception Thrown(Exception exception)
