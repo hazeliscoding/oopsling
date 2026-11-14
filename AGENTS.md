@@ -49,6 +49,7 @@ One meaning per term. Code, docs, UI copy and agents use these words and no syno
 - `dotnet pack Oopsling.slnx -c Release -o artifacts/packages` builds both packages.
 - `dotnet publish samples/Oopsling.Sample -c Release -r win-x64 -o artifacts/publish` makes the sample's NativeAOT build; use `linux-x64` or `osx-arm64` on those OSes. On Windows it needs Visual Studio's C++ workload. If linking fails with "'vswhere.exe' is not recognized", put `%ProgramFiles(x86)%\Microsoft Visual Studio\Installer` on PATH: VS 18's `vcvarsall.bat` calls `vswhere.exe` by bare name, and the error text lands in the linker path.
 - To prove a guard test, add a throwaway file that breaks its rule, such as a core class that creates an `HttpClient`, check that exactly that test fails, then delete the file. The file has to compile, since warnings are errors.
+- A crash of a process that Claude Code's shell starts leaves nothing in Windows' Application log: the shell's error mode turns Windows Error Reporting off for its children. The sample's `--crash native` turns it back on for itself. Any other check that needs Windows' record of a crash starts the app through WMI (`Invoke-CimMethod -ClassName Win32_Process -MethodName Create`), whose processes have it on, as apps started from Explorer do.
 
 ## Working style
 
