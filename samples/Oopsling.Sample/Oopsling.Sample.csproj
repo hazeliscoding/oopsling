@@ -10,6 +10,8 @@
     <!-- Report each trim warning where it comes from instead of one per assembly. -->
     <TrimmerSingleWarn>false</TrimmerSingleWarn>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- The native crash for checks calls into Windows through source-generated interop, which needs unsafe code. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

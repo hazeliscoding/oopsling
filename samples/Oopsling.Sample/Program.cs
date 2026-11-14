@@ -1,8 +1,9 @@
+using System.Runtime.InteropServices;
 using Avalonia;
 
 namespace Oopsling.Sample;
 
-internal static class Program
+internal static partial class Program
 {
     // How a host gives the window its own language: whole sentences, with the app's name in them.
     private static readonly CrashReportStrings German = new()
@@ -39,8 +40,33 @@ internal static class Program
             Option(args, "--repo") ?? "hazeliscoding/oopsling",
             Option(args, "--contact"),
             Option(args, "--lang") == "de" ? German : null);
+
+        // For automated checks on Windows: a native crash, which no managed handler sees. A parent's error mode can turn
+        // Windows Error Reporting off for its children, as Claude Code's shell does, and then Windows records nothing.
+        // Apps that users start from Explorer have it on.
+        if (Option(args, "--crash") == "native" && OperatingSystem.IsWindows())
+        {
+            SetErrorMode(0);
+            RtlFillMemory(8, 1, 0);
+        }
+
+        // For automated checks: write the report the window would show to a file and exit, since a native crash's report
+        // isn't a file of its own.
+        if (Option(args, "--print-report") is { } file)
+        {
+            File.WriteAllText(file, CrashReports.TakeUnshown()?.Text ?? "");
+            return;
+        }
+
         AppBuilder.Configure<App>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);
     }
 
     internal static string? Option(string[] args, string name) => args.SkipWhile(arg => arg != name).Skip(1).FirstOrDefault();
+
+    [LibraryImport("kernel32.dll")]
+    private static partial uint SetErrorMode(uint mode);
+
+    // Writes to an address no process owns, inside Windows' own code.
+    [LibraryImport("kernel32.dll")]
+    private static partial void RtlFillMemory(nint destination, nuint length, byte fill);
 }
