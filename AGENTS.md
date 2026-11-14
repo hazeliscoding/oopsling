@@ -26,7 +26,8 @@ Each rule has its reason, so it can be applied to cases it didn't foresee. When 
 
 One meaning per term. Code, docs, UI copy and agents use these words and no synonyms.
 
-- **Crash:** an unhandled managed exception that ends the process. Nothing else counts.
+- **Crash:** an unhandled managed exception that ends the process, or on Windows, a native crash. Nothing else counts.
+- **Native crash:** a crash with no managed exception, such as an access violation, a stack overflow or `Environment.FailFast`, which Windows records in its Application log. Oopsling reads it at the next launch, on Windows only.
 - **Report:** the masked Markdown file Oopsling writes for one crash. It is the issue body as it will be filed.
 - **Host:** an app that uses Oopsling, such as Staypaw.
 - **Mask:** replace personal text with a placeholder before anything is written, such as the home folder, the user name or a token.
