@@ -1,6 +1,6 @@
 Oopsling turns a crash in your .NET app into a GitHub issue the user files themselves, and sends nothing on its own.
 
-When an unhandled exception ends your app, Oopsling writes one masked report to a file on the user's PC. At the next launch, a window shows the report, and Report on GitHub opens your repo's new-issue page with the report filled in, in the user's own browser. Nothing leaves the PC unless the user presses Submit there, or sends it to your contact themselves.
+When an unhandled exception ends your app, Oopsling writes one masked report to a file on the user's PC. On Windows, a native crash, such as an access violation or a stack overflow, is read from Windows' Application log instead. At the next launch, a window shows the report, and Report on GitHub opens your repo's new-issue page with the report filled in, in the user's own browser. Nothing leaves the PC unless the user presses Submit there, or sends it to your contact themselves.
 
 - `Oopsling`: the crash handler and the report, with no UI. Works in any .NET app.
 - `Oopsling.Avalonia`: the window that shows the last report once.

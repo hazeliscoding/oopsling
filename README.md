@@ -45,6 +45,7 @@ System.IO.FileNotFoundException: Could not find file '<home>/.config/oopsling-sa
 
 - When an unhandled exception ends your app, Oopsling writes one report to a file on the user's PC: the exception and its stack, your app's version, and the OS, .NET version and architecture. Nothing else.
 - Before it writes, it masks the home folder, the user name wherever it appears, and anything that looks like a token.
+- Since 1.3, on Windows, it also reports a native crash, which no exception handler sees, such as an access violation in native code or a stack overflow. At the next launch it reads Windows' own record of the crash from the Application log, and the report holds the exception code, the module it happened in, and the .NET runtime's stack when the runtime logged one, masked the same way.
 - At the next launch, a small Avalonia window shows the report, with Report on GitHub, Copy and Dismiss.
 - Report on GitHub opens your repo's new-issue page with the title and report filled in. When a report is too long for a link, the link carries the top of the stack, and the whole report goes on the clipboard to paste in.
 - For users without a GitHub account, you can give a contact, an email address or a link. The window shows it under its buttons, and clicking it copies the report and opens a mail draft or the page.
@@ -59,6 +60,7 @@ flowchart LR
     handler --> file["Crash report<br/>a Markdown file on the user's PC"]
     launch["Next launch<br/>of your app"] --> window["Oopsling window<br/>shows the report"]
     file --> window
+    log["Windows' Application log<br/>a native crash, on Windows"] --> window
     window --> browser["User's browser<br/>filled-in GitHub issue"]
     browser -.-> issue["GitHub issue<br/>only if the user presses Submit"]
 ```
