@@ -129,8 +129,9 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 
 **Done when:** on Windows, the sample made to crash natively leaves no managed report, yet its next launch shows a report of the native crash; a masking test covers the paths an event carries; and the core's guard tests still pass.
 
-Checked on 2026-11-14, on Windows 11:
+**Done on 2026-11-15.** Checked on 2026-11-14 on Windows 11, then by CI on `0ca8506`.
 
+- CI's `windows-latest` runner logs crashes too: the native crash check passed there on both builds, with the same titles as below, and the 137 tests passed.
 - `scripts/crash-check.sh` passed on the sample's JIT and NativeAOT builds. Each native crash left no managed report, and the next launch read it on its first try: "access violation (0xC0000005) in ntdll.dll" in the NativeAOT build, and "in coreclr.dll" in the JIT build, with the runtime's stack naming `Program.Main`. Neither held the user or host name.
 - Launched normally after a native crash, the NativeAOT sample showed "Oopsling Sample closed because of an error" with that report.
 - Started through WMI, which leaves Windows Error Reporting on, a managed crash left both a report and Windows' event. The next launch showed the report, not a second, native one, and the launch after showed nothing.
