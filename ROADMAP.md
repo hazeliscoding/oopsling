@@ -82,7 +82,7 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 ## Decisions after 1.0 (2026-10-27)
 
 - **Open work stays in this file,** the owner's call, not in GitHub issues, milestones or a Project board. Work goes from the next unchecked item, as before. This gives up a public board that contributors could follow.
-- **The finished milestones are folded into Shipped.** M0 to M4's checklists, with the evidence for each "Done when", are in `git show v1.0.0:ROADMAP.md`. M4's notes from after the tag (the 1.0.0 publish, the fresh-install check against it, and Staypaw taking it) are in `git show 80f299f:ROADMAP.md`. M5's checklist and evidence are in `git show 943d075:ROADMAP.md`. M4's last box, a Staypaw release with Oopsling in it, is in `git show ede389b:ROADMAP.md`. M6's checklist and evidence are in `git show 03a1745:ROADMAP.md`. Oopsling commits straight to `main`, so those hashes stay.
+- **The finished milestones are folded into Shipped.** M0 to M4's checklists, with the evidence for each "Done when", are in `git show v1.0.0:ROADMAP.md`. M4's notes from after the tag (the 1.0.0 publish, the fresh-install check against it, and Staypaw taking it) are in `git show 80f299f:ROADMAP.md`. M5's checklist and evidence are in `git show 943d075:ROADMAP.md`. M4's last box, a Staypaw release with Oopsling in it, is in `git show ede389b:ROADMAP.md`. M6's checklist and evidence are in `git show 03a1745:ROADMAP.md`. M7's checklist and evidence are in `git show e092dc2:ROADMAP.md`. Oopsling commits straight to `main`, so those hashes stay.
 - **The next milestones,** in this order, the owner's picks from Later: a contact line for users without a GitHub account, and the window's text in any language (1.1); Sweepling as the second host; native crashes on Windows (1.2). The order puts the small additions first, since Staypaw's users include gamers without GitHub accounts, and the large one last. It gives up starting on native crashes, which Staypaw may hit, until after Sweepling. *The versions moved on 2026-11-12: Sweepling needed 1.2, so native crashes are 1.3. See "Decisions in M6".*
 - **.NET 10 only stays.** .NET 8 and 9 both reach the end of their support in November 2026, so targeting them would serve hosts for a few weeks. This gives up hosts that can't move to .NET 10, such as CyberRadio Assistant on .NET 8.
 
@@ -120,23 +120,7 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 | [1.0.0](https://github.com/hazeliscoding/oopsling/releases/tag/v1.0.0) | 2026-10-27 | M4: install steps, a quick start and a demo in the README, the fresh-install check on each OS, `SECURITY.md` and `CONTRIBUTING.md`, and error messages that name what they refused. |
 | [1.1.0](https://github.com/hazeliscoding/oopsling/releases/tag/v1.1.0) | 2026-10-27 | M5: a contact for users without a GitHub account, the window's text in the host's language, and each pack checked against 1.0.0's API. |
 | [1.2.0](https://github.com/hazeliscoding/oopsling/releases/tag/v1.2.0) | 2026-11-13 | M6: a folder of the host's own for reports, for apps whose installer empties theirs, each pack checked against 1.1.0's API, and Sweepling as the second host. |
-
-## M7: 1.3, native crashes on Windows
-
-- [x] A dated decision on how to read a crash that left no managed exception, at the next launch: the core reads Windows' Application log through `wevtapi`, on Windows only. See "Decisions in M7".
-- [x] A dated decision on what such a report holds, since "What a report holds" lists only a managed exception's fields: the exception code, the faulting module, the crashed app's version and the runtime's own stack when there is one, masked like any report. See "Decisions in M7".
-- [x] It reads the log only when the window asks for reports, never at startup, so a launch still costs one handler and one folder check. `TakeUnshown` reads it, and `Start` doesn't touch it.
-
-**Done when:** on Windows, the sample made to crash natively leaves no managed report, yet its next launch shows a report of the native crash; a masking test covers the paths an event carries; and the core's guard tests still pass.
-
-**Done on 2026-11-15.** Checked on 2026-11-14 on Windows 11, then by CI on `0ca8506`.
-
-- CI's `windows-latest` runner logs crashes too: the native crash check passed there on both builds, with the same titles as below, and the 137 tests passed.
-- `scripts/crash-check.sh` passed on the sample's JIT and NativeAOT builds. Each native crash left no managed report, and the next launch read it on its first try: "access violation (0xC0000005) in ntdll.dll" in the NativeAOT build, and "in coreclr.dll" in the JIT build, with the runtime's stack naming `Program.Main`. Neither held the user or host name.
-- Launched normally after a native crash, the NativeAOT sample showed "Oopsling Sample closed because of an error" with that report.
-- Started through WMI, which leaves Windows Error Reporting on, a managed crash left both a report and Windows' event. The next launch showed the report, not a second, native one, and the launch after showed nothing.
-- Masking tests cover a module path in a home folder and a runtime stack naming source files there. The 137 tests pass, the guard tests among them.
-- The NativeAOT sample grew by 56,832 bytes, from 18,702,848 to 18,759,680.
+| [1.3.0](https://github.com/hazeliscoding/oopsling/releases/tag/v1.3.0) | 2026-11-15 | M7: native crashes on Windows, read from Windows' Application log at the next launch, with the exception code, the faulting module and the runtime's stack when there is one. |
 
 ## How we'll know it works
 
