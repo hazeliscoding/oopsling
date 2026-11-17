@@ -83,7 +83,7 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 
 - **Open work stays in this file,** the owner's call, not in GitHub issues, milestones or a Project board. Work goes from the next unchecked item, as before. This gives up a public board that contributors could follow.
 - **The finished milestones are folded into Shipped.** M0 to M4's checklists, with the evidence for each "Done when", are in `git show v1.0.0:ROADMAP.md`. M4's notes from after the tag (the 1.0.0 publish, the fresh-install check against it, and Staypaw taking it) are in `git show 80f299f:ROADMAP.md`. M5's checklist and evidence are in `git show 943d075:ROADMAP.md`. M4's last box, a Staypaw release with Oopsling in it, is in `git show ede389b:ROADMAP.md`. M6's checklist and evidence are in `git show 03a1745:ROADMAP.md`. M7's checklist and evidence are in `git show e092dc2:ROADMAP.md`. Oopsling commits straight to `main`, so those hashes stay.
-- **The next milestones,** in this order, the owner's picks from Later: a contact line for users without a GitHub account, and the window's text in any language (1.1); Sweepling as the second host; native crashes on Windows (1.2). The order puts the small additions first, since Staypaw's users include gamers without GitHub accounts, and the large one last. It gives up starting on native crashes, which Staypaw may hit, until after Sweepling. *The versions moved on 2026-11-12: Sweepling needed 1.2, so native crashes are 1.3. See "Decisions in M6".*
+- **The next milestones,** in this order, the owner's picks from Later: a contact line for users without a GitHub account, and the window's text in any language (1.1); Sweepling as the second host; native crashes on Windows (1.2). The order puts the small additions first, since Staypaw's users include gamers without GitHub accounts, and the large one last. It gives up starting on native crashes, which Staypaw may hit, until after Sweepling. *The versions moved on 2026-11-12: Sweepling needed 1.2, so native crashes are 1.3. See "Decisions in M6". Done with M7 on 2026-11-15; the next milestones are in "Decisions after 1.3".*
 - **.NET 10 only stays.** .NET 8 and 9 both reach the end of their support in November 2026, so targeting them would serve hosts for a few weeks. This gives up hosts that can't move to .NET 10, such as CyberRadio Assistant on .NET 8.
 
 ## Decisions in M5 (2026-10-27)
@@ -112,6 +112,12 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 - **A host run as `dotnet app.dll` reads no native crashes.** Windows records them under `dotnet.exe`, which would match every app run that way. Hosts ship as their own executable, as Staypaw and Sweepling do.
 - **The sample takes `--crash native` and `--print-report <file>`, for checks.** The first turns Windows Error Reporting back on for itself and writes to an address no process owns, inside Windows' own code. The second writes the report the window would show and exits, since a native crash's report isn't a file the check can read. `scripts/crash-check.sh` runs M7's done line with them on both builds.
 
+## Decisions after 1.3 (2026-11-15)
+
+- **Hosts and issue forms become milestones,** the owner's pick. Every host on Later's list is an Avalonia 12 app on .NET 10. Shybun, Prompuff, XIV Vault and Gil Sweep have shipped, and XIV Vault turns blank issues off, so its issue link would open the template chooser and lose the report. The dogfooding log has no real crash yet. So line numbers in NativeAOT stacks, the unclean-exit marker, WPF and WinForms windows, an Avalonia 11 window and a `ShowUnshown` callback stay in Later, each waiting on its own condition. This gives up starting on any of them before a host or a report shows the need.
+- **The order is 1.3 in Staypaw and Sweepling, then Shybun, Prompuff, issue forms with XIV Vault, and Gil Sweep,** the owner's pick. Native crash reports reach no user until the two hosts that have Oopsling ship 1.3.0. Shybun is the closest to them. Prompuff moves up from last because it's the only host on macOS and Linux, where Oopsling has been checked only with its sample, and masking must not fail there either. This gives up Gil Sweep second, as Later had it, and issue forms for the first new hosts.
+- **Each new host follows M6's pattern:** it takes `Oopsling.Avalonia` from nuget.org, anything it needs that only suited earlier hosts is fixed in Oopsling first with a dated decision, and a release of it with Oopsling ships. Shybun's, Tattlehop's and Overglance's roadmaps list crash reporting under Not planned as network code, so each records taking Oopsling, which sends nothing, in its own roadmap first.
+
 ## Shipped
 
 | Version | Released | What it brought |
@@ -121,6 +127,42 @@ Given up for them: the diagnostics other crash reporters collect (minidumps, log
 | [1.1.0](https://github.com/hazeliscoding/oopsling/releases/tag/v1.1.0) | 2026-10-27 | M5: a contact for users without a GitHub account, the window's text in the host's language, and each pack checked against 1.0.0's API. |
 | [1.2.0](https://github.com/hazeliscoding/oopsling/releases/tag/v1.2.0) | 2026-11-13 | M6: a folder of the host's own for reports, for apps whose installer empties theirs, each pack checked against 1.1.0's API, and Sweepling as the second host. |
 | [1.3.0](https://github.com/hazeliscoding/oopsling/releases/tag/v1.3.0) | 2026-11-15 | M7: native crashes on Windows, read from Windows' Application log at the next launch, with the exception code, the faulting module and the runtime's stack when there is one. |
+
+## M8: 1.3 in Staypaw and Sweepling
+
+- [ ] Staypaw takes 1.3.0 from nuget.org and ships it in a release, with its update fix from 2026-11-13.
+- [ ] Sweepling takes 1.3.0 from nuget.org and ships it in a release.
+
+**Done when:** for each app, a release build made to crash natively, started as a user would start it, shows the report at its next launch, and a release with 1.3.0 has shipped.
+
+## M9: Shybun, the third host
+
+- [ ] Shybun's roadmap records taking Oopsling, and its guardrail tests cover Oopsling's assemblies.
+- [ ] Anything Shybun needs that only suited earlier hosts is fixed in Oopsling first, with a dated decision.
+
+**Done when:** a Shybun build made to crash shows the window at its next launch and opens a filled-in issue page for Shybun's repo, and a Shybun release with Oopsling in it has shipped.
+
+## M10: Prompuff, the first host on macOS and Linux
+
+- [ ] Prompuff takes `Oopsling.Avalonia` from nuget.org on all three OSes.
+- [ ] Anything Prompuff needs that only suited Windows hosts is fixed in Oopsling first, with a dated decision.
+
+**Done when:** on Windows, macOS and Linux, a Prompuff build made to crash writes a report with the home folder and user name masked, and shows it at its next launch; and a Prompuff release with Oopsling in it has shipped.
+
+## M11: 1.4, issue forms, with XIV Vault
+
+- [ ] A dated decision on how a host names its issue form and the field the report goes in, and what a report too long for the link does there.
+- [ ] Each pack is checked against 1.3.0's API.
+- [ ] XIV Vault's desktop app takes 1.4 with its bug report form.
+
+**Done when:** an XIV Vault build made to crash opens its bug report form with the title and the report filled in while blank issues stay off, and an XIV Vault release with Oopsling in it has shipped.
+
+## M12: Gil Sweep
+
+- [ ] Gil Sweep takes `Oopsling.Avalonia` from nuget.org.
+- [ ] Anything Gil Sweep needs that only suited earlier hosts is fixed in Oopsling first, with a dated decision.
+
+**Done when:** a Gil Sweep build made to crash shows the window at its next launch and opens a filled-in issue page for Gil Sweep's repo, and a Gil Sweep release with Oopsling in it has shipped.
 
 ## How we'll know it works
 
@@ -132,9 +174,8 @@ The dogfooding log in `docs/dogfooding.md`: crashes reported through Oopsling, a
 - An unclean-exit marker ("closed unexpectedly last time"), if it can tell a crash from being ended in Task Manager or a forced reboot.
 - WPF and WinForms windows. Until then, those apps use the core with their own dialog.
 - A window for Avalonia 11, if a host on it asks. Azure Key Vault Explorer was on 11.3 when Oopsling was suggested to it. Avalonia 12 broke APIs the window uses, so it would be a build of its own.
-- Filling in an issue form's fields, not only a blank issue's title and body, for hosts whose repos turn blank issues off. GitHub fills a form's fields from parameters named after them.
 - `ShowUnshown` telling the host whether a window opened. It can't know when the owner hasn't opened yet, so it would need a callback or an event.
-- More hosts after Sweepling, one at a time: Shybun, Tattlebun and Overglance as each one ships, then Gil Sweep, XIV Vault's desktop app, Prompuff and Carmine Workbench. Each needs a public repo with issues turned on, or the issue link opens a 404.
+- More hosts after Gil Sweep, one at a time as each ships: Tattlehop, Overglance and Carmine Workbench. Each needs a public repo with issues turned on, or the issue link opens a 404. Overglance's repo is private.
 
 ## Not planned
 
